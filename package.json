@@ -52,7 +52,7 @@
     "husky": "^3.0.9",
     "jest": "^24.9.0",
     "lerna-changelog": "^0.8.2",
-    "lint-staged": "^10.2.6",
+    "lint-staged": "10.2.6",
     "prettier": "^2.0.5",
     "ts-jest": "^25.1.0",
     "typescript": "^3.6.4",
