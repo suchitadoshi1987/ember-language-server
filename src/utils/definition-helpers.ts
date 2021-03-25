@@ -6,7 +6,8 @@ import { Location, Range } from 'vscode-languageserver/node';
 import { URI } from 'vscode-uri';
 
 import { isModuleUnificationApp, podModulePrefixForRoot, hasAddonFolderInPath, getProjectAddonsRoots, getProjectInRepoAddonsRoots } from './layout-helpers';
-
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const finder = require('find-package-json');
 const mProjectAddonsRoots = memoize(getProjectAddonsRoots, {
   length: 1,
   maxAge: 600000,
@@ -86,9 +87,12 @@ export function getAbstractPartsWithTemplates(root: string, prefix: string, ...c
   const name = collection.pop();
 
   return [
-    [root, prefix, ...collection, `${name}.js`],
-    [root, prefix, ...collection, `${name}.ts`],
-    [root, prefix, ...collection, `${name}.hbs`],
+    [root, prefix, collection, `${name}.js`],
+    [root, prefix, collection, name, 'index.js'],
+    [root, prefix, collection, `${name}.ts`],
+    [root, prefix, collection, name, 'index.ts'],
+    [root, prefix, collection, `${name}.hbs`],
+    [root, prefix, collection, name, 'index.hbs'],
   ];
 }
 

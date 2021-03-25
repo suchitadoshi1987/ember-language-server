@@ -1,5 +1,6 @@
 import * as path from 'path';
 import * as fs from 'fs';
+import * as fg from 'fast-glob';
 
 import { Definition, Location } from 'vscode-languageserver/node';
 import { DefinitionFunctionParams } from './../../utils/addon-api';
