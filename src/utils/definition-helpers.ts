@@ -6,6 +6,8 @@ import { Location, Range } from 'vscode-languageserver/node';
 import { URI } from 'vscode-uri';
 
 import { isModuleUnificationApp, podModulePrefixForRoot, hasAddonFolderInPath, getProjectAddonsRoots, getProjectInRepoAddonsRoots } from './layout-helpers';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const finder = require('find-package-json');
 const mProjectAddonsRoots = memoize(getProjectAddonsRoots, {
   length: 1,
   maxAge: 600000,
@@ -14,6 +16,24 @@ const mProjectInRepoAddonsRoots = memoize(getProjectInRepoAddonsRoots, {
   length: 1,
   maxAge: 600000,
 });
+
+export const mProjectRoot = memoize(getProjectParentRoot);
+
+/**
+ * Find the top level package.json of the project.
+ */
+export function getProjectParentRoot(root: string) {
+  const it = finder(root);
+  let data = it.next();
+  let fileName = data.filename;
+
+  while (!data.done) {
+    fileName = data.filename;
+    data = it.next();
+  }
+
+  return fileName ? path.parse(fileName).dir : '';
+}
 
 export function pathsToLocations(...paths: string[]): Location[] {
   return paths.filter(fs.existsSync).map((modulePath) => {
@@ -73,8 +93,11 @@ export function getAbstractParts(root: string, prefix: string, collection: strin
 export function getAbstractPartsWithTemplates(root: string, prefix: string, collection: string, name: string) {
   return [
     [root, prefix, collection, `${name}.js`],
+    [root, prefix, collection, name, 'index.js'],
     [root, prefix, collection, `${name}.ts`],
+    [root, prefix, collection, name, 'index.ts'],
     [root, prefix, collection, `${name}.hbs`],
+    [root, prefix, collection, name, 'index.hbs'],
   ];
 }
 
@@ -144,7 +167,7 @@ export function getPathsForComponentTemplates(root: string, maybeComponentName: 
   return paths;
 }
 
-export function getAddonImport(root: string, importPath: string) {
+export function getAddonImport(root: string, importPath: string, appName: string) {
   const importParts = importPath.split('/');
   let addonName = importParts.shift();
 
@@ -157,7 +180,7 @@ export function getAddonImport(root: string, importPath: string) {
   }
 
   const items: string[] = [];
-  const roots = items.concat(mProjectAddonsRoots(root), mProjectInRepoAddonsRoots(root));
+  const roots = items.concat(mProjectAddonsRoots(root), mProjectInRepoAddonsRoots(root), mProjectInRepoAddonsRoots(path.join(root, appName)));
   let existingPaths: string[] = [];
   let hasValidPath = false;
 
@@ -173,6 +196,7 @@ export function getAddonImport(root: string, importPath: string) {
     const addonPaths: string[][] = [];
     const possibleLocations = [
       [rootPath, 'app', ...importParts],
+      [rootPath, 'tests', ...importParts],
       [rootPath, 'addon', ...importParts],
       [rootPath, ...importParts],
     ];
