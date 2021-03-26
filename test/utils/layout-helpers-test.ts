@@ -164,7 +164,7 @@ describe('definition-helpers', function () {
       const root = path.join(__dirname, './../fixtures/full-project');
       const items = getProjectAddonsRoots(root, [], 'hope_modules');
 
-      expect(items.length).toEqual(2);
+      expect(items.length).toEqual(3);
     });
   });
 
