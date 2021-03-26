@@ -149,7 +149,7 @@ describe('definition-helpers', function () {
       const root = path.join(__dirname, './../fixtures/project-with-in-repo-addons');
       const items = getProjectInRepoAddonsRoots(root);
 
-      expect(items.length).toEqual(1);
+      expect(items.length).toEqual(2);
     });
     it('must discover in-repo addons for MU structure', function () {
       const root = path.join(__dirname, './../fixtures/mu-project-with-in-repo-addons');
@@ -164,7 +164,7 @@ describe('definition-helpers', function () {
       const root = path.join(__dirname, './../fixtures/full-project');
       const items = getProjectAddonsRoots(root, [], 'hope_modules');
 
-      expect(items.length).toEqual(2);
+      expect(items.length).toEqual(3);
     });
   });
 
