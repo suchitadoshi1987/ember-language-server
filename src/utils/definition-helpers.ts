@@ -90,14 +90,13 @@ export function getAbstractParts(root: string, prefix: string, collection: strin
   ];
 }
 
-export function getAbstractPartsWithTemplates(root: string, prefix: string, collection: string, name: string) {
+export function getAbstractPartsWithTemplates(root: string, prefix: string, ...collection: string[]) {
+  const name = collection.pop();
+
   return [
-    [root, prefix, collection, `${name}.js`],
-    [root, prefix, collection, name, 'index.js'],
-    [root, prefix, collection, `${name}.ts`],
-    [root, prefix, collection, name, 'index.ts'],
-    [root, prefix, collection, `${name}.hbs`],
-    [root, prefix, collection, name, 'index.hbs'],
+    [root, prefix, ...collection, `${name}.js`],
+    [root, prefix, ...collection, `${name}.ts`],
+    [root, prefix, ...collection, `${name}.hbs`],
   ];
 }
 
@@ -198,7 +197,7 @@ export function getAddonImport(root: string, importPath: string, appName: string
       [rootPath, 'app', ...importParts],
       [rootPath, 'tests', ...importParts],
       [rootPath, 'addon', ...importParts],
-      [rootPath, ...importParts],
+      [rootPath, '', ...importParts],
     ];
 
     possibleLocations.forEach((locationArr: Parameters<typeof getAbstractPartsWithTemplates>) => {
@@ -267,9 +266,9 @@ export function getAddonPathsForType(root: string, collection: 'services' | 'mod
   return existingPaths;
 }
 
-export function getAddonPathsForComponentTemplates(root: string, maybeComponentName: string) {
+export function getAddonPathsForComponentTemplates(root: string, maybeComponentName: string, appRoot: string) {
   const items: string[] = [];
-  const roots = items.concat(mProjectAddonsRoots(root), mProjectInRepoAddonsRoots(root));
+  const roots = items.concat(mProjectAddonsRoots(root), mProjectInRepoAddonsRoots(root), mProjectInRepoAddonsRoots(path.join(root, appRoot)));
   let existingPaths: string[] = [];
   let hasValidPath = false;
 

@@ -1,9 +1,6 @@
 import * as path from 'path';
 import * as t from '@babel/types';
-import { URI } from 'vscode-uri';
-import * as fg from 'fast-glob';
-import * as memoize from 'memoizee';
-import { Definition, Location, Range } from 'vscode-languageserver/node';
+import { Definition, Location } from 'vscode-languageserver/node';
 import { DefinitionFunctionParams } from './../../utils/addon-api';
 import { pathsToLocations, getAddonPathsForType, getAddonImport, mProjectRoot } from '../../utils/definition-helpers';
 import {
@@ -25,29 +22,6 @@ type ItemType = 'Model' | 'Transform' | 'Service';
 // barking on 'LayoutCollectorFn' is defined but never used  @typescript-eslint/no-unused-vars
 // eslint-disable-line
 type LayoutCollectorFn = (root: string, itemName: string, podModulePrefix?: string) => string[];
-
-const mFindByGlob = memoize(findByGlob, {
-  length: 3,
-  maxAge: 600000,
-});
-
-function findByGlob(pathName: string, appName: string, parentRoot: string) {
-  let res: string[] = [];
-  const pathParts = pathName.split('/');
-  const addonName = pathParts.shift();
-
-  res = fg.sync([`${parentRoot}/${appName}/(lib|engines)/**/${addonName}/**/${pathParts.join('/')}?(/index).js`], { ignore: ['**/node_modules/**'] });
-
-  if (!res.length) {
-    res = fg.sync([`${parentRoot}/(app|lib)/**/${addonName}/**/addon/${pathParts.join('/')}?(/index).js`], {
-      ignore: ['**/node_modules/**'],
-    });
-  }
-
-  return res.map((modulePath) => {
-    return Location.create(URI.file(modulePath).toString(), Range.create(0, 0, 0, 0));
-  });
-}
 
 function joinPaths(...args: string[]) {
   return ['.ts', '.js'].map((extName: string) => {
@@ -215,10 +189,6 @@ export default class CoreScriptDefinitionProvider {
       const appName = (await server.connection.workspace.getConfiguration('els.appRoot')) || '';
 
       definitions = this.guessPathForImport(parentRoot, uri, pathName, appName) || [];
-
-      if (!definitions.length) {
-        definitions = mFindByGlob(pathName, appName, parentRoot);
-      }
     } else if (isServiceInjection(astPath)) {
       let serviceName = ((astPath.node as unknown) as t.Identifier).name;
       const args = astPath.parent.value.arguments;
