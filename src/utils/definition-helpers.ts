@@ -87,12 +87,9 @@ export function getAbstractPartsWithTemplates(root: string, prefix: string, ...c
   const name = collection.pop();
 
   return [
-    [root, prefix, collection, `${name}.js`],
-    [root, prefix, collection, name, 'index.js'],
-    [root, prefix, collection, `${name}.ts`],
-    [root, prefix, collection, name, 'index.ts'],
-    [root, prefix, collection, `${name}.hbs`],
-    [root, prefix, collection, name, 'index.hbs'],
+    [root, prefix, ...collection, `${name}.js`],
+    [root, prefix, ...collection, `${name}.ts`],
+    [root, prefix, ...collection, `${name}.hbs`],
   ];
 }
 
