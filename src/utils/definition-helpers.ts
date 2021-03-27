@@ -6,8 +6,7 @@ import { Location, Range } from 'vscode-languageserver/node';
 import { URI } from 'vscode-uri';
 
 import { isModuleUnificationApp, podModulePrefixForRoot, hasAddonFolderInPath, getProjectAddonsRoots, getProjectInRepoAddonsRoots } from './layout-helpers';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const finder = require('find-package-json');
+
 const mProjectAddonsRoots = memoize(getProjectAddonsRoots, {
   length: 1,
   maxAge: 600000,
@@ -22,17 +21,10 @@ export const mProjectRoot = memoize(getProjectParentRoot);
 /**
  * Find the top level package.json of the project.
  */
-export function getProjectParentRoot(root: string) {
-  const it = finder(root);
-  let data = it.next();
-  let fileName = data.filename;
+export function getProjectParentRoot(root: string, appRoot: string) {
+  const indexOfAppRoot = root.indexOf(`/${appRoot}`);
 
-  while (!data.done) {
-    fileName = data.filename;
-    data = it.next();
-  }
-
-  return fileName ? path.parse(fileName).dir : '';
+  return appRoot && indexOfAppRoot > -1 ? root.slice(0, indexOfAppRoot) : root;
 }
 
 export function pathsToLocations(...paths: string[]): Location[] {

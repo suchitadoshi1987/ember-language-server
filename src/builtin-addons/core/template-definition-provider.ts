@@ -7,6 +7,7 @@ import { isLinkToTarget, isLinkComponentRouteTarget, isOutlet } from './../../ut
 import ASTPath from './../../glimmer-utils';
 import { getGlobalRegistry, getRegistryForRoot } from './../../utils/registry-api';
 import { mProjectRoot } from '../../utils/definition-helpers';
+import { getAppRootFromConfig } from '../../utils/common-helpers';
 import { normalizeToClassicComponent } from '../../utils/normalizers';
 import { isTemplatePath, isTestFile, getComponentNameFromURI, isModuleUnificationApp, getPodModulePrefix } from './../../utils/layout-helpers';
 
@@ -98,8 +99,10 @@ export function provideRouteDefinition(root: string, routeName: string): Locatio
 export default class TemplateDefinitionProvider {
   async onDefinition(root: string, params: DefinitionFunctionParams): Promise<Definition | null> {
     const uri = params.textDocument.uri;
-    const appRoot = (await params.server.connection.workspace.getConfiguration('els.appRoot')) || '';
-    const projectParentPath = mProjectRoot(root);
+    const appRoot = await getAppRootFromConfig(params.server);
+
+    root = mProjectRoot(root, appRoot);
+
     const focusPath = params.focusPath;
     let definitions: Location[] = params.results;
 
@@ -111,28 +114,28 @@ export default class TemplateDefinitionProvider {
       definitions = this.provideChildRouteDefinitions(root, uri);
     } else if (this.maybeClassicComponentName(focusPath)) {
       // <FooBar @some-component-name="my-component" /> || {{some-component some-name="my-component/name"}}
-      definitions = this.provideComponentDefinition(projectParentPath, this.extractValueForMaybeClassicComponentName(focusPath), appRoot);
+      definitions = this.provideComponentDefinition(root, this.extractValueForMaybeClassicComponentName(focusPath), appRoot);
     } else if (this.isAngleComponent(focusPath)) {
       // <FooBar />
-      definitions = this.provideAngleBrackedComponentDefinition(projectParentPath, focusPath, appRoot);
+      definitions = this.provideAngleBrackedComponentDefinition(root, focusPath, appRoot);
       // {{#foo-bar}} {{/foo-bar}}
     } else if (this.isComponentWithBlock(focusPath)) {
-      definitions = this.provideBlockComponentDefinition(projectParentPath, focusPath, appRoot);
+      definitions = this.provideBlockComponentDefinition(root, focusPath, appRoot);
       // {{action "fooBar"}}, (action "fooBar"), (action this.fooBar), this.someProperty
     } else if (this.isActionName(focusPath) || this.isLocalProperty(focusPath)) {
-      definitions = this.providePropertyDefinition(projectParentPath, focusPath, uri, appRoot);
+      definitions = this.providePropertyDefinition(root, focusPath, uri, appRoot);
       // {{foo-bar}}
     } else if (this.isComponentOrHelperName(focusPath)) {
-      definitions = this.provideMustacheDefinition(projectParentPath, focusPath, appRoot);
+      definitions = this.provideMustacheDefinition(root, focusPath, appRoot);
       // <FooBar @somePropertyToFindUsage="" />
     } else if (isLinkComponentRouteTarget(focusPath)) {
       // <LinkTo @route="name" />
-      definitions = this.provideRouteDefinition(projectParentPath, (focusPath.node as ASTv1.TextNode).chars);
+      definitions = this.provideRouteDefinition(root, (focusPath.node as ASTv1.TextNode).chars);
     } else if (this.isAnglePropertyAttribute(focusPath)) {
-      definitions = this.provideAngleBracketComponentAttributeUsage(projectParentPath, focusPath, appRoot);
+      definitions = this.provideAngleBracketComponentAttributeUsage(root, focusPath, appRoot);
       // {{hello propertyUsageToFind=someValue}}
     } else if (this.isHashPairKey(focusPath)) {
-      definitions = this.provideHashPropertyUsage(projectParentPath, focusPath, appRoot);
+      definitions = this.provideHashPropertyUsage(root, focusPath, appRoot);
     } else if (isLinkToTarget(focusPath)) {
       definitions = this.provideRouteDefinition(root, (focusPath.node as ASTv1.PathExpression).original);
     }

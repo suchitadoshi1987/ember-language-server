@@ -3,6 +3,7 @@ import * as t from '@babel/types';
 import { Definition, Location } from 'vscode-languageserver/node';
 import { DefinitionFunctionParams } from './../../utils/addon-api';
 import { pathsToLocations, getAddonPathsForType, getAddonImport, mProjectRoot } from '../../utils/definition-helpers';
+import { getAppRootFromConfig } from '../../utils/common-helpers';
 import {
   isRouteLookup,
   isTransformReference,
@@ -185,8 +186,9 @@ export default class CoreScriptDefinitionProvider {
       definitions = this.guessPathForImport(root, uri, ((astPath.node as unknown) as t.StringLiteral).value) || [];
     } else if (isImportSpecifier(astPath)) {
       const pathName: string = ((astPath.parentFromLevel(2) as unknown) as any).source.value;
-      const parentRoot = mProjectRoot(root);
-      const appName = (await server.connection.workspace.getConfiguration('els.appRoot')) || '';
+      const appName = await getAppRootFromConfig(server);
+
+      const parentRoot = mProjectRoot(root, appName);
 
       definitions = this.guessPathForImport(parentRoot, uri, pathName, appName) || [];
     } else if (isServiceInjection(astPath)) {

@@ -39,6 +39,7 @@ import {
 } from '../../utils/layout-helpers';
 
 import { normalizeToAngleBracketComponent } from '../../utils/normalizers';
+import { getAppRootFromConfig } from '../../utils/common-helpers';
 import { getTemplateBlocks } from '../../utils/template-tokens-collector';
 import { ASTNode } from 'ast-types';
 import { ASTv1 } from '@glimmer/syntax';
@@ -203,7 +204,7 @@ export default class TemplateCompletionProvider {
     const focusPath = params.focusPath;
     const uri = params.textDocument.uri;
     const originalText = params.originalText || '';
-    const appRoot = (await params.server.connection.workspace.getConfiguration('els.appRoot')) || '';
+    const appRoot = await getAppRootFromConfig(params.server);
 
     try {
       if (isNamedBlockName(focusPath)) {
