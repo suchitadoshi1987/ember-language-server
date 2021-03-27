@@ -6,8 +6,7 @@ import { Location, Range } from 'vscode-languageserver/node';
 import { URI } from 'vscode-uri';
 
 import { isModuleUnificationApp, podModulePrefixForRoot, hasAddonFolderInPath, getProjectAddonsRoots, getProjectInRepoAddonsRoots } from './layout-helpers';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const finder = require('find-package-json');
+
 const mProjectAddonsRoots = memoize(getProjectAddonsRoots, {
   length: 1,
   maxAge: 600000,

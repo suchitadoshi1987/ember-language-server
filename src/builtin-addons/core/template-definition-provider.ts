@@ -129,7 +129,7 @@ export default class TemplateDefinitionProvider {
       definitions = this.provideComponentDefinition(root, componentName, appRoot, addonName);
     } else if (this.isAngleComponent(focusPath)) {
       // <FooBar />
-      definitions = this.provideAngleBrackedComponentDefinition(projectParentPath, focusPath, appRoot);
+      definitions = this.provideAngleBrackedComponentDefinition(root, focusPath, appRoot);
       // {{#foo-bar}} {{/foo-bar}}
     } else if (this.isComponentWithBlock(focusPath)) {
       definitions = this.provideBlockComponentDefinition(root, focusPath, appRoot);
@@ -142,7 +142,7 @@ export default class TemplateDefinitionProvider {
       // <FooBar @somePropertyToFindUsage="" />
     } else if (isLinkComponentRouteTarget(focusPath)) {
       // <LinkTo @route="name" />
-      definitions = this.provideRouteDefinition(projectParentPath, (focusPath.node as ASTv1.TextNode).chars);
+      definitions = this.provideRouteDefinition(root, (focusPath.node as ASTv1.TextNode).chars);
     } else if (this.isAnglePropertyAttribute(focusPath)) {
       definitions = this.provideAngleBracketComponentAttributeUsage(root, focusPath, appRoot);
       // {{hello propertyUsageToFind=someValue}}
