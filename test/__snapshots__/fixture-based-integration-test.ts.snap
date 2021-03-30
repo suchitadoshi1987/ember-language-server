@@ -38,6 +38,47 @@ Array [
       },
     },
   },
+  Object {
+    "detail": "component",
+    "kind": 7,
+    "label": "Foo$Bar",
+    "textEdit": Object {
+      "newText": "Foo$Bar",
+      "range": Object {
+        "end": Object {
+          "character": 2,
+          "line": 1,
+        },
+        "start": Object {
+          "character": 1,
+          "line": 1,
+        },
+      },
+    },
+  },
+]
+`;
+
+exports[`With \`full-project\` initialized on server Completion request returns all angle-bracket in a element expression for in repo addons with batman syntax 1`] = `
+Array [
+  Object {
+    "detail": "component",
+    "kind": 7,
+    "label": "Foo$Bar",
+    "textEdit": Object {
+      "newText": "Foo$Bar",
+      "range": Object {
+        "end": Object {
+          "character": 2,
+          "line": 1,
+        },
+        "start": Object {
+          "character": 1,
+          "line": 1,
+        },
+      },
+    },
+  },
 ]
 `;
 
@@ -103,6 +144,24 @@ Array [
     "label": "some-helper",
     "textEdit": Object {
       "newText": "some-helper",
+      "range": Object {
+        "end": Object {
+          "character": 2,
+          "line": 1,
+        },
+        "start": Object {
+          "character": 2,
+          "line": 1,
+        },
+      },
+    },
+  },
+  Object {
+    "detail": "component",
+    "kind": 7,
+    "label": "foo$bar",
+    "textEdit": Object {
+      "newText": "foo$bar",
       "range": Object {
         "end": Object {
           "character": 2,
@@ -592,6 +651,24 @@ Array [
   Object {
     "detail": "route",
     "kind": 17,
+    "label": "inrepo-addon-completion",
+    "textEdit": Object {
+      "newText": "inrepo-addon-completion",
+      "range": Object {
+        "end": Object {
+          "character": 12,
+          "line": 3,
+        },
+        "start": Object {
+          "character": 12,
+          "line": 3,
+        },
+      },
+    },
+  },
+  Object {
+    "detail": "route",
+    "kind": 17,
     "label": "test-route",
     "textEdit": Object {
       "newText": "test-route",
@@ -672,6 +749,24 @@ Array [
     "label": "definition",
     "textEdit": Object {
       "newText": "definition",
+      "range": Object {
+        "end": Object {
+          "character": 23,
+          "line": 2,
+        },
+        "start": Object {
+          "character": 23,
+          "line": 2,
+        },
+      },
+    },
+  },
+  Object {
+    "detail": "route",
+    "kind": 17,
+    "label": "inrepo-addon-completion",
+    "textEdit": Object {
+      "newText": "inrepo-addon-completion",
       "range": Object {
         "end": Object {
           "character": 23,
