@@ -2,8 +2,8 @@ import * as path from 'path';
 import * as t from '@babel/types';
 import { Definition, Location } from 'vscode-languageserver/node';
 import { DefinitionFunctionParams } from './../../utils/addon-api';
-import { pathsToLocations, getAddonPathsForType, getAddonImport, mProjectRoot } from '../../utils/definition-helpers';
-import { getAppRootFromConfig } from '../../utils/common-helpers';
+import { pathsToLocations, getAddonPathsForType, getAddonImport } from '../../utils/definition-helpers';
+import { getAppRootFromConfig, mProjectRoot } from '../../utils/common-helpers';
 import {
   isRouteLookup,
   isTransformReference,
