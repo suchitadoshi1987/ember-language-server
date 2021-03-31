@@ -83,7 +83,7 @@ export default class TemplateCompletionProvider {
       const initStartTime = Date.now();
 
       const appRoot = await getAppRootFromConfig(_);
-      const prjRoot = mProjectRoot(project.root, appRoot);
+      const prjRoot = mProjectRoot(_.projectRoots, project.root, appRoot);
 
       mListHelpers(project.root);
       mListModifiers(project.root);
@@ -209,7 +209,7 @@ export default class TemplateCompletionProvider {
     const originalText = params.originalText || '';
     const appRoot = await getAppRootFromConfig(params.server);
 
-    root = mProjectRoot(root, appRoot);
+    root = mProjectRoot(params.server.projectRoots, root, appRoot);
 
     try {
       if (isNamedBlockName(focusPath)) {

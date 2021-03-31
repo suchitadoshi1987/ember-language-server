@@ -39,7 +39,7 @@ export default class ScriptCompletionProvider {
 
     const appRoot = await getAppRootFromConfig(params.server);
 
-    root = mProjectRoot(root, appRoot);
+    root = mProjectRoot(params.server.projectRoots, root, appRoot);
 
     if (params.type !== 'script') {
       return params.results;
