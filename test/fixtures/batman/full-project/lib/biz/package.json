@@ -1,0 +1,14 @@
+{
+    "name": "biz",
+    "keywords": [
+      "ember-addon"
+    ],
+    "dependencies": {
+    
+    },
+    "ember-addon": {
+      "paths": [
+        "../../../lib/foo"
+      ]
+    }
+  }

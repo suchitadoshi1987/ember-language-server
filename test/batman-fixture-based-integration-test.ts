@@ -63,6 +63,25 @@ describe('With `batman project` initialized on server', () => {
 
       expect(response).toMatchSnapshot();
     });
+
+    it('returns all angle-bracket in a element expression for child project in repo addons with batman syntax', async () => {
+      const applicationTemplatePath = path.join(__dirname, 'fixtures', 'batman', 'full-project', 'app', 'templates', 'inrepo-addon-completion.hbs');
+      const params = {
+        textDocument: {
+          uri: URI.file(applicationTemplatePath).toString(),
+        },
+        position: {
+          line: 1,
+          character: 2,
+        },
+      };
+
+      openFile(connection, applicationTemplatePath);
+
+      const response = await connection.sendRequest(CompletionRequest.method, params);
+
+      expect(response).toMatchSnapshot();
+    });
   });
 
   describe('Definition request', () => {
