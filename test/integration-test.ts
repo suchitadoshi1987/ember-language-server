@@ -148,7 +148,6 @@ describe('integration', function () {
 
       expect(result).toMatchSnapshot();
     });
-
     it('go to local template-only component in module', async () => {
       const result = await getResult(
         DefinitionRequest.method,
