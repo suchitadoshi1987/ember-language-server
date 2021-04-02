@@ -261,6 +261,39 @@ Object {
 }
 `;
 
+exports[`integration Able to provide autocomplete information for local context access support child project addon calling parent project addon 1`] = `
+Object {
+  "registry": Object {
+    "component": Object {
+      "bar": Array [
+        "lib/foo/addon/templates/components/bar.hbs",
+        "lib/foo/app/components/bar.js",
+      ],
+    },
+  },
+  "response": Array [
+    Object {
+      "detail": "component",
+      "kind": 7,
+      "label": "Foo$Bar",
+      "textEdit": Object {
+        "newText": "Foo$Bar",
+        "range": Object {
+          "end": Object {
+            "character": 3,
+            "line": 0,
+          },
+          "start": Object {
+            "character": 1,
+            "line": 0,
+          },
+        },
+      },
+    },
+  ],
+}
+`;
+
 exports[`integration Able to provide autocomplete information for local context access support collocated components 1`] = `
 Object {
   "registry": Object {

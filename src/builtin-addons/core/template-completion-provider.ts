@@ -4,6 +4,7 @@ import { uniqBy } from 'lodash';
 
 import * as memoize from 'memoizee';
 import * as fs from 'fs';
+import * as path from 'path';
 import { emberBlockItems, emberMustacheItems, emberSubExpressionItems, emberModifierItems } from './ember-helpers';
 import { templateContextLookup } from './template-context-provider';
 import { provideComponentTemplatePaths } from './template-definition-provider';
@@ -344,7 +345,7 @@ export default class TemplateCompletionProvider {
     }
 
     if (this.hasNamespaceSupport) {
-      const registry = this.server.getRegistry(this.project.root);
+      const registry = this.server.getTopLevelRootRegistry(this.project.root);
       const extraCompletions: CompletionItem[] = [];
       const filteredCompletions = completions.filter((item) => {
         if (item.detail === 'component') {
@@ -358,10 +359,13 @@ export default class TemplateCompletionProvider {
             });
 
           roots.forEach((r) => {
+            const rootNameParts = r.name.split(path.sep);
+            const addonName = rootNameParts.pop() || '';
+
             extraCompletions.push({
               ...item,
               ...{
-                label: `${normalizeToAngleBracketComponent(r.name)}$${item.label}`,
+                label: `${normalizeToAngleBracketComponent(addonName)}$${item.label}`,
               },
             });
           });

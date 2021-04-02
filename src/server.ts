@@ -81,6 +81,30 @@ export default class Server {
   getUsages(normalizedToken: string, resultType: MatchResultType): Usage[] {
     return findRelatedFiles(normalizedToken, resultType);
   }
+
+  _getTopLevelParentRoot(root: string) {
+    const parts = root.split(path.sep);
+
+    parts.pop();
+
+    while (parts.length) {
+      const parent: string = this._getTopLevelParentRoot(parts.join(path.sep));
+      const potentialParentPath = this.projectRoots.projectForPath(path.join('/', parent));
+
+      if (potentialParentPath) {
+        return potentialParentPath.root;
+      } else {
+        parts.pop();
+      }
+    }
+
+    return path.resolve(root);
+  }
+
+  getTopLevelRootRegistry(rawRoot: string) {
+    return getRegistryForRoot(this._getTopLevelParentRoot(rawRoot));
+  }
+
   getRegistry(rawRoot: string) {
     return getRegistryForRoot(path.resolve(rawRoot));
   }

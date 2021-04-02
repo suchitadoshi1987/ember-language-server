@@ -244,7 +244,7 @@ export function getAddonPathsForType(root: string, collection: 'services' | 'mod
   return existingPaths;
 }
 
-export function getAddonPathsForComponentTemplates(root: string, maybeComponentName: string) {
+export function getAddonPathsForComponentTemplates(root: string, maybeComponentName: string, addonName?: string) {
   const items: string[] = [];
   const roots = items.concat(mProjectAddonsRoots(root), mProjectInRepoAddonsRoots(root));
   let existingPaths: string[] = [];
@@ -280,7 +280,7 @@ export function getAddonPathsForComponentTemplates(root: string, maybeComponentN
       .map((pathArr: string[]): string => {
         return path.join(...pathArr.filter((part: any) => !!part));
       })
-      .filter(fs.existsSync);
+      .filter((filePath) => (addonName ? filePath.includes(addonName) && fs.existsSync(filePath) : fs.existsSync(filePath)));
 
     if (validPaths.length) {
       hasValidPath = true;
