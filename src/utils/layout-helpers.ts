@@ -175,34 +175,13 @@ function getRecursiveInRepoAddonRoots(root: string, roots: string[]) {
       }
     });
 
-  return recursiveRoots;
+  return recursiveRoots.sort();
 }
 
 export function getProjectInRepoAddonsRoots(root: string) {
   const roots: string[] = [];
 
-  if (!isModuleUnificationApp(root)) {
-    ['lib', 'engines'].forEach((prefix) => {
-      const addons = safeWalkSync(path.join(root, prefix), {
-        directories: true,
-        globs: ['**/package.json'],
-      });
-
-      addons
-        .map((relativePath: string) => {
-          return path.dirname(path.join(root, prefix, relativePath));
-        })
-        .filter((packageRoot: string) => isProjectAddonRoot(packageRoot))
-        .forEach((validRoot: string) => {
-          roots.push(validRoot);
-          getRecursiveInRepoAddonRoots(validRoot, roots).forEach((relatedRoot: string) => {
-            if (!roots.includes(relatedRoot)) {
-              roots.push(relatedRoot);
-            }
-          });
-        });
-    });
-  } else {
+  if (isModuleUnificationApp(root)) {
     const prefix = 'packages';
     const addons = safeWalkSync(path.join(root, prefix), {
       directories: true,
@@ -222,6 +201,12 @@ export function getProjectInRepoAddonsRoots(root: string) {
           }
         });
       });
+  } else {
+    getRecursiveInRepoAddonRoots(root, []).forEach((resolvedRoot) => {
+      if (!roots.includes(resolvedRoot)) {
+        roots.push(resolvedRoot);
+      }
+    });
   }
 
   return roots;

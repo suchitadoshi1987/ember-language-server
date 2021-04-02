@@ -2173,34 +2173,6 @@ Object {
 }
 `;
 
-exports[`integration Go to definition works for all supported cases complex usecase - go to template from child app to parent app addon 1`] = `
-Object {
-  "registry": Object {
-    "component": Object {
-      "bar": Array [
-        "lib/foo/addon/templates/components/bar.hbs",
-        "lib/foo/app/components/bar.js",
-      ],
-    },
-  },
-  "response": Array [
-    Object {
-      "range": Object {
-        "end": Object {
-          "character": 0,
-          "line": 0,
-        },
-        "start": Object {
-          "character": 0,
-          "line": 0,
-        },
-      },
-      "uri": "/lib/foo/addon/templates/components/bar.hbs",
-    },
-  ],
-}
-`;
-
 exports[`integration Go to definition works for all supported cases go to component from typescripted inline template 1`] = `
 Object {
   "registry": Object {
