@@ -81,7 +81,6 @@ export default class Server {
   getUsages(normalizedToken: string, resultType: MatchResultType): Usage[] {
     return findRelatedFiles(normalizedToken, resultType);
   }
-
   _getTopLevelParentRoot(root: string) {
     const parts = root.split(path.sep);
 
@@ -105,8 +104,37 @@ export default class Server {
     return getRegistryForRoot(this._getTopLevelParentRoot(rawRoot));
   }
 
-  getRegistry(rawRoot: string) {
-    return getRegistryForRoot(path.resolve(rawRoot));
+  getRegistry(rawRoot: string | string[]) {
+    if (Array.isArray(rawRoot)) {
+      const roots = rawRoot.slice(0);
+      const mainRegistry = getRegistryForRoot(roots.pop() as string);
+
+      roots.forEach((root) => {
+        const subRegistry = getRegistryForRoot(root);
+
+        Object.keys(subRegistry).forEach((keyName) => {
+          const collection: { [key: string]: string[] } = subRegistry[keyName as keyof typeof subRegistry];
+
+          Object.keys(collection).forEach((itemName) => {
+            if (!Array.isArray(mainRegistry[keyName as keyof typeof mainRegistry][itemName])) {
+              mainRegistry[keyName as keyof typeof mainRegistry][itemName] = [];
+            }
+
+            const rootRef = mainRegistry[keyName as keyof typeof mainRegistry][itemName];
+
+            collection[itemName].forEach((filePath) => {
+              if (!rootRef.includes(filePath)) {
+                rootRef.push(filePath);
+              }
+            });
+          });
+        });
+      });
+
+      return mainRegistry;
+    } else {
+      return getRegistryForRoot(rawRoot);
+    }
   }
 
   documentSymbolProviders: DocumentSymbolProvider[] = [new JSDocumentSymbolProvider(), new HBSDocumentSymbolProvider()];
@@ -181,13 +209,21 @@ export default class Server {
 
         if (item) {
           const normalizedItem = normalizeMatchNaming(item);
-          const registryResults: string[] = (this.getRegistry(project.root)[normalizedItem.type][normalizedItem.name] || []).sort();
+          const registryResults: string[] = [];
+
+          project.roots.forEach((root) => {
+            (this.getRegistry(root)[normalizedItem.type][normalizedItem.name] || []).forEach((item) => {
+              if (!registryResults.includes(item)) {
+                registryResults.push(item);
+              }
+            });
+          });
 
           if (!includeMeta) {
-            return registryResults;
+            return registryResults.sort();
           }
 
-          return registryResults.map((filePath) => {
+          return registryResults.sort().map((filePath) => {
             return {
               path: filePath,
               meta: project.matchPathToType(filePath),
