@@ -189,9 +189,10 @@ export default class TemplateDefinitionProvider {
       paths = [...getPathsForComponentScripts(root, maybeComponentName), ...getPathsForComponentTemplates(root, maybeComponentName)].filter(fs.existsSync);
     }
 
-    // If the paths has a value then check if it is namespaced with the addon.
-    // We are purposely doing this here so that we can filter out any non namespaced
-    // path before calling the `addonPaths` function.
+    if (!paths.length) {
+      paths = mAddonPathsForComponentTemplates(root, maybeComponentName);
+    }
+
     if (addonName) {
       const addonMeta = this.project.addonsMeta.find((el) => el.name === addonName);
 
@@ -200,10 +201,6 @@ export default class TemplateDefinitionProvider {
           return p.startsWith(addonMeta.root);
         });
       }
-    }
-
-    if (!paths.length) {
-      paths = mAddonPathsForComponentTemplates(root, maybeComponentName, addonName);
     }
 
     return paths;
