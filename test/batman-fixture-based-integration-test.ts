@@ -64,15 +64,15 @@ describe('With `batman project` initialized on server', () => {
       expect(response).toMatchSnapshot();
     });
 
-    it('returns all angle-bracket in a element expression for child project in repo addons with batman syntax', async () => {
-      const applicationTemplatePath = path.join(__dirname, 'fixtures', 'batman', 'full-project', 'app', 'templates', 'inrepo-addon-completion.hbs');
+    it('returns all angle-bracket components with same name from different namespaces', async () => {
+      const applicationTemplatePath = path.join(__dirname, 'fixtures', 'batman', 'app', 'templates', 'same-component-name.hbs');
       const params = {
         textDocument: {
           uri: URI.file(applicationTemplatePath).toString(),
         },
         position: {
-          line: 1,
-          character: 2,
+          line: 0,
+          character: 1,
         },
       };
 

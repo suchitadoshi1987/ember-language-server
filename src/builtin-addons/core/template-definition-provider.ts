@@ -39,7 +39,7 @@ function getComponentAndAddonName(rawComponentName: string) {
 export function getPathsFromRegistry(type: 'helper' | 'modifier' | 'component', name: string, root: string): string[] {
   const absRoot = path.normalize(root);
   const registry = getGlobalRegistry();
-  const bucket: any = registry[type].get(name) || new Set();
+  const bucket: Set<string> = registry[type].get(name) || new Set();
 
   return Array.from(bucket).filter((el: string) => path.normalize(el).includes(absRoot) && !isTestFile(path.normalize(el)) && fs.existsSync(el)) as string[];
 }
@@ -124,7 +124,7 @@ export default class TemplateDefinitionProvider {
       definitions = this.provideComponentDefinition(root, componentName, addonName);
     } else if (this.isAngleComponent(focusPath)) {
       // <FooBar />
-      definitions = this.provideAngleBrackedComponentDefinition(root, focusPath);
+      definitions = this.provideAngleBrackedComponentDefinition(focusPath);
       // {{#foo-bar}} {{/foo-bar}}
     } else if (this.isComponentWithBlock(focusPath)) {
       definitions = this.provideBlockComponentDefinition(root, focusPath);
@@ -181,9 +181,6 @@ export default class TemplateDefinitionProvider {
   provideRouteDefinition(root: string, routeName: string): Location[] {
     return provideRouteDefinition(root, routeName);
   }
-  _provideComponentTemplatePaths(root: string, rawComponentName: string) {
-    return provideComponentTemplatePaths(root, rawComponentName);
-  }
   _provideLikelyRawComponentTemplatePaths(root: string, rawComponentName: string, addonName: string) {
     const maybeComponentName = normalizeToClassicComponent(rawComponentName);
     let paths = getPathsFromRegistry('component', maybeComponentName, root);
@@ -208,16 +205,26 @@ export default class TemplateDefinitionProvider {
 
     return paths;
   }
-  provideLikelyComponentTemplatePath(root: string, rawComponentName: string): Location[] {
+  provideLikelyComponentTemplatePath(rawComponentName: string): Location[] {
     // Check for batman syntax <Foo$Bar>
     const { addonName, componentName } = getComponentAndAddonName(rawComponentName);
 
-    const paths = this._provideLikelyRawComponentTemplatePaths(root, componentName, addonName);
+    const paths: string[] = [];
+
+    this.project.roots.forEach((root) => {
+      const localPaths = this._provideLikelyRawComponentTemplatePaths(root, componentName, addonName);
+
+      localPaths.forEach((p) => {
+        if (!paths.includes(p)) {
+          paths.push(p);
+        }
+      });
+    });
 
     return pathsToLocations(...(paths.length > 1 ? paths.filter((postfix: string) => isTemplatePath(postfix)) : paths));
   }
-  provideAngleBrackedComponentDefinition(root: string, focusPath: ASTPath) {
-    return this.provideLikelyComponentTemplatePath(root, (focusPath.node as ASTv1.ElementNode).tag);
+  provideAngleBrackedComponentDefinition(focusPath: ASTPath) {
+    return this.provideLikelyComponentTemplatePath((focusPath.node as ASTv1.ElementNode).tag);
   }
   provideBlockComponentDefinition(root: string, focusPath: ASTPath): Location[] {
     const maybeComponentName = ((focusPath.node as ASTv1.BlockStatement).path as ASTv1.PathExpression).original;
