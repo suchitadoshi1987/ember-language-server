@@ -148,6 +148,95 @@ describe('integration', function () {
 
       expect(result).toMatchSnapshot();
     });
+
+    it('complex usecase - go to template from child app to parent app addon', async () => {
+      const result = await getResult(
+        DefinitionRequest.method,
+        connection,
+        {
+          'full-project': {
+            app: {
+              templates: {
+                'hello.hbs': '<Foo$Bar />',
+              },
+            },
+            lib: {
+              biz: {
+                addon: {
+                  templates: {
+                    components: {
+                      'bar.hbs': '',
+                    },
+                  },
+                },
+                'package.json': JSON.stringify({
+                  name: 'biz',
+                  keywords: ['ember-addon'],
+                  dependencies: {},
+                  'ember-addon': {
+                    paths: ['../../../lib/foo'],
+                  },
+                }),
+                'index.js': `/* eslint-env node */
+                'use strict';
+                
+                module.exports = {
+                  name: 'biz',
+                
+                  isDevelopingAddon() {
+                    return true;
+                  }
+                };`,
+              },
+            },
+            'package.json': JSON.stringify({
+              dependencies: { 'ember-holy-futuristic-template-namespacing-batman': '^1.0.2' },
+              'ember-addon': {
+                paths: ['../lib/foo', 'lib/biz'],
+              },
+            }),
+          },
+          lib: {
+            foo: {
+              addon: {
+                templates: {
+                  components: {
+                    'bar.hbs': '',
+                  },
+                },
+              },
+              app: {
+                components: {
+                  'bar.js': 'Class Foo{}',
+                },
+              },
+              'package.json': JSON.stringify({
+                name: 'foo',
+                keywords: ['ember-addon'],
+                dependencies: {},
+              }),
+              'index.js': `/* eslint-env node */
+              'use strict';
+              
+              module.exports = {
+                name: 'foo',
+              
+                isDevelopingAddon() {
+                  return true;
+                }
+              };`,
+            },
+          },
+          'package.json': JSON.stringify({
+            dependencies: { 'ember-holy-futuristic-template-namespacing-batman': '^1.0.2' },
+          }),
+        },
+        'full-project/app/templates/hello.hbs',
+        { line: 0, character: 2 }
+      );
+
+      expect(result).toMatchSnapshot();
+    });
     it('go to local template-only component in module', async () => {
       const result = await getResult(
         DefinitionRequest.method,
