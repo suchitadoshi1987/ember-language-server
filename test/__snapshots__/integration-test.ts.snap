@@ -2,6 +2,24 @@
 
 exports[`integration API:Chain support addon ordering 1`] = `
 Object {
+  "addonsMeta": Array [
+    Object {
+      "name": "addon1",
+      "root": "node_modules/addon1",
+    },
+    Object {
+      "name": "addon2",
+      "root": "node_modules/addon2",
+    },
+    Object {
+      "name": "addon3",
+      "root": "node_modules/addon3",
+    },
+    Object {
+      "name": "addon4",
+      "root": "node_modules/addon4",
+    },
+  ],
   "registry": Object {
     "component": Object {
       "dory": Array [
@@ -34,6 +52,7 @@ Object {
 
 exports[`integration Able to load API from project itself project custom completion:template 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {
     "component": Object {
       "hello": Array [
@@ -64,6 +83,12 @@ Object {
 
 exports[`integration Able to provide API:Completion support dummy addon completion:script 1`] = `
 Object {
+  "addonsMeta": Array [
+    Object {
+      "name": "provider",
+      "root": "node_modules/provider",
+    },
+  ],
   "registry": Object {
     "component": Object {
       "hello": Array [
@@ -81,6 +106,12 @@ Object {
 
 exports[`integration Able to provide API:Completion support dummy addon completion:template 1`] = `
 Object {
+  "addonsMeta": Array [
+    Object {
+      "name": "provider",
+      "root": "node_modules/provider",
+    },
+  ],
   "registry": Object {
     "component": Object {
       "hello": Array [
@@ -111,6 +142,12 @@ Object {
 
 exports[`integration Able to provide API:Definition support dummy addon definition:script 1`] = `
 Object {
+  "addonsMeta": Array [
+    Object {
+      "name": "provider",
+      "root": "node_modules/provider",
+    },
+  ],
   "registry": Object {
     "component": Object {
       "hello": Array [
@@ -138,6 +175,12 @@ Object {
 
 exports[`integration Able to provide API:Definition support dummy addon definition:template 1`] = `
 Object {
+  "addonsMeta": Array [
+    Object {
+      "name": "provider",
+      "root": "node_modules/provider",
+    },
+  ],
   "registry": Object {
     "component": Object {
       "hello": Array [
@@ -165,6 +208,12 @@ Object {
 
 exports[`integration Able to provide API:Reference support dummy addon reference:template 1`] = `
 Object {
+  "addonsMeta": Array [
+    Object {
+      "name": "provider",
+      "root": "node_modules/provider",
+    },
+  ],
   "registry": Object {
     "component": Object {
       "hello": Array [
@@ -192,6 +241,7 @@ Object {
 
 exports[`integration Able to provide autocomplete information for angle component arguments names support template-only collocated components arguments extraction 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {
     "component": Object {
       "foo": Array [
@@ -296,6 +346,7 @@ Object {
 
 exports[`integration Able to provide autocomplete information for local context access support collocated components 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {
     "component": Object {
       "hello": Array [
@@ -347,6 +398,7 @@ Object {
 
 exports[`integration Able to provide autocomplete information for local context access support collocated components in mustache arguments 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {
     "component": Object {
       "hello": Array [
@@ -398,6 +450,7 @@ Object {
 
 exports[`integration Able to provide autocomplete information for local context access support collocated components in node attributes 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {
     "component": Object {
       "hello": Array [
@@ -449,6 +502,7 @@ Object {
 
 exports[`integration Able to provide autocomplete information for local scoped params support component name autocomplete from block params 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {
     "component": Object {
       "foo": Array [
@@ -517,6 +571,7 @@ Object {
 
 exports[`integration Able to provide autocomplete information for local scoped params support mustache blocks 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {
     "component": Object {
       "foo": Array [
@@ -592,6 +647,7 @@ Object {
 
 exports[`integration Able to provide autocomplete information for local scoped params support tag blocks 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {
     "component": Object {
       "foo": Array [
@@ -667,6 +723,12 @@ Object {
 
 exports[`integration Able to use classes for API support dummy class-based addon definition:template 1`] = `
 Object {
+  "addonsMeta": Array [
+    Object {
+      "name": "provider",
+      "root": "node_modules/provider",
+    },
+  ],
   "registry": Object {
     "component": Object {
       "hello": Array [
@@ -694,6 +756,12 @@ Object {
 
 exports[`integration Able to use classes for API support dummy class-based addon definition:template with correctly binded context 1`] = `
 Object {
+  "addonsMeta": Array [
+    Object {
+      "name": "provider",
+      "root": "node_modules/provider",
+    },
+  ],
   "registry": Object {
     "component": Object {
       "hello": Array [
@@ -892,6 +960,7 @@ Object {
 
 exports[`integration Autocomplete works for broken templates autocomplete information for component #3 {{# 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {
     "component": Object {
       "darling": Array [
@@ -1795,6 +1864,7 @@ Object {
 
 exports[`integration Autocomplete works for broken templates autocomplete information for modifier #4 <Foo {{ 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {
     "component": Object {
       "hello": Array [
@@ -1871,6 +1941,7 @@ Object {
 
 exports[`integration Autocomplete works in LinkTo components for @route argument able to autocomplete basic routes 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {
     "component": Object {
       "hello": Array [
@@ -1972,6 +2043,7 @@ Array [
 
 exports[`integration DocumentSymbolProvider able to provide symbols for script document 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {
     "component": Object {
       "hello": Array [
@@ -1985,6 +2057,7 @@ Object {
 
 exports[`integration DocumentSymbolProvider able to provide symbols for template document 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {
     "component": Object {
       "hello": Array [
@@ -1998,6 +2071,7 @@ Object {
 
 exports[`integration DocumentSymbolProvider stable if ast broken in script document 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {
     "component": Object {
       "hello": Array [
@@ -2011,6 +2085,7 @@ Object {
 
 exports[`integration DocumentSymbolProvider stable if ast broken in template document 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {
     "component": Object {
       "hello": Array [
@@ -2024,6 +2099,7 @@ Object {
 
 exports[`integration GlimmerNative able to provide glimmer-native component 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {
     "component": Object {
       "hello": Array [
@@ -2092,6 +2168,7 @@ Object {
 
 exports[`integration GlimmerX able to provide list of locally defined components 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {},
   "response": Array [
     Object {
@@ -2208,6 +2285,7 @@ Object {
 
 exports[`integration Go to definition works for all supported cases go to component from typescripted inline template 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {
     "component": Object {
       "darling": Array [
@@ -2238,6 +2316,12 @@ Object {
 
 exports[`integration Go to definition works for all supported cases go to definition from app to in repo addon 1`] = `
 Object {
+  "addonsMeta": Array [
+    Object {
+      "name": "biz",
+      "root": "lib/biz",
+    },
+  ],
   "registry": Object {
     "component": Object {
       "bar": Array [
@@ -2271,6 +2355,7 @@ Object {
 
 exports[`integration Go to definition works for all supported cases go to definition from handlebars template working if we have test for component 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {
     "component": Object {
       "darling": Array [
@@ -2302,6 +2387,7 @@ Object {
 
 exports[`integration Go to definition works for all supported cases go to definition from script template working if we have test for component 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {
     "component": Object {
       "darling": Array [
@@ -2333,6 +2419,7 @@ Object {
 
 exports[`integration Go to definition works for all supported cases go to local template-only component 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {
     "component": Object {
       "darling": Array [
@@ -2363,6 +2450,7 @@ Object {
 
 exports[`integration Go to definition works for all supported cases go to local template-only component in module 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {
     "component": Object {
       "darling": Array [
@@ -2393,6 +2481,7 @@ Object {
 
 exports[`integration Go to definition works for all supported cases go to local template-only component in pod-like 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {
     "component": Object {
       "darling": Array [
@@ -2423,6 +2512,7 @@ Object {
 
 exports[`integration Go to definition works for all supported cases go to local template-only component in templates dir 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {
     "component": Object {
       "darling": Array [
@@ -2453,6 +2543,7 @@ Object {
 
 exports[`integration Go to definition works for all supported cases to children route from application outlet 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {
     "routePath": Object {
       "application": Array [
@@ -2483,6 +2574,7 @@ Object {
 
 exports[`integration Go to definition works for all supported cases to children route from meaningful outlet 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {
     "routePath": Object {
       "foo": Array [
@@ -2532,6 +2624,7 @@ Object {
 
 exports[`integration Go to definition works for all supported cases to to route defintion from LinkTo component 1`] = `
 Object {
+  "addonsMeta": Array [],
   "registry": Object {
     "component": Object {
       "hello": Array [
