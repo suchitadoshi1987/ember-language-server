@@ -4,7 +4,6 @@ import { uniqBy } from 'lodash';
 
 import * as memoize from 'memoizee';
 import * as fs from 'fs';
-import * as path from 'path';
 import { emberBlockItems, emberMustacheItems, emberSubExpressionItems, emberModifierItems } from './ember-helpers';
 import { templateContextLookup } from './template-context-provider';
 import { provideComponentTemplatePaths } from './template-definition-provider';
@@ -381,7 +380,7 @@ export default class TemplateCompletionProvider {
             });
 
           roots.forEach((r) => {
-            const rootNameParts = r.name.split(path.sep);
+            const rootNameParts = r.name.split('/');
             const addonName = rootNameParts.pop() || '';
 
             extraCompletions.push({
