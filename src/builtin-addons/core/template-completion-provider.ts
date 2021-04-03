@@ -365,7 +365,6 @@ export default class TemplateCompletionProvider {
     }
 
     if (this.hasNamespaceSupport) {
-      const roots = [this.project.root, ...this.project.addonsMeta.map((meta) => meta.root)];
       const registry = this.server.getRegistry(this.project.roots);
       const extraCompletions: CompletionItem[] = [];
       const filteredCompletions = completions.filter((item) => {
