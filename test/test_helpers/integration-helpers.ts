@@ -57,8 +57,6 @@ export async function createProject(
   dir.write(files);
   const normalizedPath = projectName ? path.normalize(path.join(dir.path(), projectName)) : path.normalize(dir.path());
 
-  await initDynamicServer(connection, normalizedPath);
-
   const params = {
     command: 'els.registerProjectPath',
     arguments: [normalizedPath],
@@ -210,18 +208,6 @@ export function makeAddonPackage(name, config, addonConfig = undefined) {
 export function initServer(connection: MessageConnection, projectName: string) {
   const params = {
     rootUri: URI.file(path.join(__dirname, '..', 'fixtures', projectName)).toString(),
-    capabilities: {},
-    initializationOptions: {
-      isELSTesting: true,
-    },
-  };
-
-  return connection.sendRequest(InitializeRequest.type, params);
-}
-
-export function initDynamicServer(connection: MessageConnection, normalizedPath: string) {
-  const params = {
-    rootUri: normalizedPath,
     capabilities: {},
     initializationOptions: {
       isELSTesting: true,
