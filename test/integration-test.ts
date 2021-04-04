@@ -1317,8 +1317,9 @@ describe('integration', function () {
             dependencies: { 'ember-holy-futuristic-template-namespacing-batman': '^1.0.2' },
           }),
         },
-        'full-project/lib/biz/addon/templates/components/bar.hbs',
-        { line: 0, character: 3 }
+        'lib/biz/addon/templates/components/bar.hbs',
+        { line: 0, character: 2 },
+        'full-project'
       );
 
       expect(result).toMatchSnapshot();
