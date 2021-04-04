@@ -4,7 +4,6 @@ import { uniqBy } from 'lodash';
 
 import * as memoize from 'memoizee';
 import * as fs from 'fs';
-import * as path from 'path';
 import { emberBlockItems, emberMustacheItems, emberSubExpressionItems, emberModifierItems } from './ember-helpers';
 import { templateContextLookup } from './template-context-provider';
 import { provideComponentTemplatePaths } from './template-definition-provider';
@@ -72,7 +71,7 @@ const mListRoutes = memoize(listRoutes, { length: 1, maxAge: 60000 });
  * @param focusPath currentfocus path
  * @returns { [key: string]: string[] }
  */
-function getResultsObj(addonsMeta: Array<AddonMeta>, server: Server, focusPath: ASTPath) {
+export function generateNamespacedComponentsHashMap(addonsMeta: Array<AddonMeta>, server: Server, isAngleComponent: boolean) {
   const resultMap: { [key: string]: string[] } = {};
 
   // Iterate over the addons meta
@@ -86,7 +85,7 @@ function getResultsObj(addonsMeta: Array<AddonMeta>, server: Server, focusPath: 
     // For each addon meta, generate the namespaced label.
     Object.keys(addonRegistry).forEach((addonItem) => {
       const addonFilePaths = addonRegistry[addonItem];
-      const itemLabel = isAngleComponentPath(focusPath) ? normalizeToAngleBracketComponent(addonItem) : addonItem;
+      const itemLabel = isAngleComponent ? normalizeToAngleBracketComponent(addonItem) : addonItem;
 
       if (!resultMap[itemLabel]) {
         resultMap[itemLabel] = [];
@@ -94,14 +93,14 @@ function getResultsObj(addonsMeta: Array<AddonMeta>, server: Server, focusPath: 
 
       // If file paths are present, then iterate over the filepath and generate the
       // namespaced label
-      if (addonFilePaths && addonFilePaths.length) {
+      if (addonFilePaths.length) {
         addonFilePaths.forEach((filePath: string) => {
           // Check if filepath starts with addon's root
           if (isRootStartingWithFilePath(addonData.root, filePath)) {
-            const rootNameParts = addonData.name.split(path.sep);
+            const rootNameParts = addonData.name.split('/');
             const addonName = rootNameParts.pop() || '';
 
-            const label = isAngleComponentPath(focusPath)
+            const label = isAngleComponent
               ? `${normalizeToAngleBracketComponent(addonName)}$${normalizeToAngleBracketComponent(addonItem)}`
               : `${addonName}$${addonItem}`;
 
@@ -420,26 +419,30 @@ export default class TemplateCompletionProvider {
     }
 
     if (this.hasNamespaceSupport) {
-      const resultsMap = getResultsObj(this.project.addonsMeta, this.server, focusPath);
-      const newCompletions: CompletionItem[] = [];
+      const hasSomeComponents = completions.some((completion) => completion.detail === 'component');
 
-      // Iterate over the completions and add name spaced labels if applicable.
-      completions.forEach((completionItem) => {
-        const matchingLabels = resultsMap[completionItem.label];
+      if (hasSomeComponents) {
+        const resultsMap = generateNamespacedComponentsHashMap(this.project.addonsMeta, this.server, isAngleComponentPath(focusPath));
+        const newCompletions: CompletionItem[] = [];
 
-        if (matchingLabels) {
-          matchingLabels.forEach((labelItem: string) => {
-            const completionObj = { ...completionItem };
+        // Iterate over the completions and add name spaced labels if applicable.
+        completions.forEach((completionItem) => {
+          const matchingLabels = resultsMap[completionItem.label];
 
-            completionObj.label = labelItem;
-            newCompletions.push(completionObj);
-          });
-        } else {
-          newCompletions.push(completionItem);
-        }
-      });
+          if (matchingLabels) {
+            matchingLabels.forEach((labelItem: string) => {
+              const completionObj = { ...completionItem };
 
-      return newCompletions;
+              completionObj.label = labelItem;
+              newCompletions.push(completionObj);
+            });
+          } else {
+            newCompletions.push(completionItem);
+          }
+        });
+
+        return newCompletions;
+      }
     }
 
     return completions;

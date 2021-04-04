@@ -137,8 +137,8 @@ export function resolvePackageRoot(root: string, addonName: string, packagesFold
  * @returns boolean
  */
 export function isRootStartingWithFilePath(rootPath: string, filePath: string) {
-  const filePathParts = filePath.split(path.sep);
-  const rootParts = rootPath.split(path.sep);
+  const filePathParts = normalizedPath(filePath).split('/');
+  const rootParts = normalizedPath(rootPath).split('/');
 
   return rootParts.every((item: string, idx: number) => filePathParts[idx] === item);
 }

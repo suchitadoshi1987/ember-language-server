@@ -232,5 +232,13 @@ describe('definition-helpers', function () {
 
       expect(doesStartWithRootPath).toBe(false);
     });
+
+    it('[Windows] should return false if the root path partially matches the file path', function () {
+      const rootPath = 'c:\\my-folder\\my';
+      const filePath = `c:\\my-folder\\my-path\\my-file.ts`;
+      const doesStartWithRootPath = isRootStartingWithFilePath(rootPath, filePath);
+
+      expect(doesStartWithRootPath).toBe(false);
+    });
   });
 });
