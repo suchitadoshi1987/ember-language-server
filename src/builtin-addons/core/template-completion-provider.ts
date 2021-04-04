@@ -1,9 +1,10 @@
 import { CompletionItem, CompletionItemKind } from 'vscode-languageserver/node';
-import { CompletionFunctionParams } from './../../utils/addon-api';
+import { AddonMeta, CompletionFunctionParams } from './../../utils/addon-api';
 import { uniqBy } from 'lodash';
 
 import * as memoize from 'memoizee';
 import * as fs from 'fs';
+import * as path from 'path';
 import { emberBlockItems, emberMustacheItems, emberSubExpressionItems, emberModifierItems } from './ember-helpers';
 import { templateContextLookup } from './template-context-provider';
 import { provideComponentTemplatePaths } from './template-definition-provider';
@@ -37,9 +38,10 @@ import {
   builtinModifiers,
   mGetProjectAddonsInfo,
   hasNamespaceSupport,
+  isRootStartingWithFilePath,
 } from '../../utils/layout-helpers';
 
-import { normalizeToAngleBracketComponent, normalizeToClassicComponent } from '../../utils/normalizers';
+import { normalizeToAngleBracketComponent } from '../../utils/normalizers';
 import { getTemplateBlocks } from '../../utils/template-tokens-collector';
 import { ASTNode } from 'ast-types';
 import { ASTv1 } from '@glimmer/syntax';
@@ -61,6 +63,59 @@ const mListPodsComponents = memoize(listPodsComponents, {
 const mListHelpers = memoize(listHelpers, { length: 1, maxAge: 60000 }); // 1 second
 
 const mListRoutes = memoize(listRoutes, { length: 1, maxAge: 60000 });
+
+/**
+ * Generates a map of completion label (file name) to array of potential namespaced
+ * paths.
+ * @param addonsMeta addons meta array
+ * @param server Server
+ * @param focusPath currentfocus path
+ * @returns { [key: string]: string[] }
+ */
+function getResultsObj(addonsMeta: Array<AddonMeta>, server: Server, focusPath: ASTPath) {
+  const resultMap: { [key: string]: string[] } = {};
+
+  // Iterate over the addons meta
+  addonsMeta.forEach((addonData: AddonMeta) => {
+    // Get the component registry based on the addon root.
+    // The component registry is a map where the file name is the key and the value are
+    // potential file paths.
+    // Eg: { foo: ['bar/bang/biz/foo.js'] }
+    const addonRegistry = server.getRegistry(addonData.root).component;
+
+    // For each addon meta, generate the namespaced label.
+    Object.keys(addonRegistry).forEach((addonItem) => {
+      const addonFilePaths = addonRegistry[addonItem];
+      const itemLabel = isAngleComponentPath(focusPath) ? normalizeToAngleBracketComponent(addonItem) : addonItem;
+
+      if (!resultMap[itemLabel]) {
+        resultMap[itemLabel] = [];
+      }
+
+      // If file paths are present, then iterate over the filepath and generate the
+      // namespaced label
+      if (addonFilePaths && addonFilePaths.length) {
+        addonFilePaths.forEach((filePath: string) => {
+          // Check if filepath starts with addon's root
+          if (isRootStartingWithFilePath(addonData.root, filePath)) {
+            const rootNameParts = addonData.name.split(path.sep);
+            const addonName = rootNameParts.pop() || '';
+
+            const label = isAngleComponentPath(focusPath)
+              ? `${normalizeToAngleBracketComponent(addonName)}$${normalizeToAngleBracketComponent(addonItem)}`
+              : `${addonName}$${addonItem}`;
+
+            if (!resultMap[itemLabel].includes(label)) {
+              resultMap[itemLabel].push(label);
+            }
+          }
+        });
+      }
+    });
+  });
+
+  return resultMap;
+}
 
 function mListMURouteLevelComponents(projectRoot: string, fileURI: string) {
   // /**/routes/**/-components/**/*.{js,ts,hbs}
@@ -365,42 +420,26 @@ export default class TemplateCompletionProvider {
     }
 
     if (this.hasNamespaceSupport) {
-      const registry = this.server.getRegistry(this.project.roots);
-      const extraCompletions: CompletionItem[] = [];
-      const filteredCompletions = completions.filter((item) => {
-        if (item.detail === 'component') {
-          const paths = registry.component[normalizeToClassicComponent(item.label)] || [];
-          const roots = this.project.addonsMeta
-            .filter(({ root }) => {
-              return paths.find((p) => p.startsWith(root));
-            })
-            .sort((a, b) => {
-              return b.root.length - a.root.length;
-            });
+      const resultsMap = getResultsObj(this.project.addonsMeta, this.server, focusPath);
+      const newCompletions: CompletionItem[] = [];
 
-          roots.forEach((r) => {
-            const rootNameParts = r.name.split('/');
-            const addonName = rootNameParts.pop() || '';
+      // Iterate over the completions and add name spaced labels if applicable.
+      completions.forEach((completionItem) => {
+        const matchingLabels = resultsMap[completionItem.label];
 
-            extraCompletions.push({
-              ...item,
-              ...{
-                label: `${normalizeToAngleBracketComponent(addonName)}$${item.label}`,
-              },
-            });
+        if (matchingLabels) {
+          matchingLabels.forEach((labelItem: string) => {
+            const completionObj = { ...completionItem };
+
+            completionObj.label = labelItem;
+            newCompletions.push(completionObj);
           });
-
-          if (roots.length) {
-            return false;
-          } else {
-            return true;
-          }
+        } else {
+          newCompletions.push(completionItem);
         }
-
-        return true;
       });
 
-      return [...filteredCompletions, ...extraCompletions];
+      return newCompletions;
     }
 
     return completions;

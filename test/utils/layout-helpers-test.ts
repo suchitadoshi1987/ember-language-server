@@ -13,6 +13,7 @@ import {
   getComponentNameFromURI,
   getProjectInRepoAddonsRoots,
   getProjectAddonsRoots,
+  isRootStartingWithFilePath,
 } from '../../src/utils/layout-helpers';
 import * as path from 'path';
 
@@ -204,6 +205,32 @@ describe('definition-helpers', function () {
       expect(items[0].split(path.sep).join('/').split('node_modules/')[1]).toEqual('@skylight/anvil');
 
       await info.destroy();
+    });
+  });
+
+  describe('isRootStartingWithFilePath', function () {
+    it('should return true if the root path exactly matches the file path', function () {
+      const rootPath = 'foo/bar/biz';
+      const filePath = 'foo/bar/biz/lib/boo.js';
+      const doesStartWithRootPath = isRootStartingWithFilePath(rootPath, filePath);
+
+      expect(doesStartWithRootPath).toBe(true);
+    });
+
+    it('should return false if the root path partially matches the file path', function () {
+      const rootPath = 'foo/bar/biz';
+      const filePath = 'foo/bar/biz-blah/lib/boo.js';
+      const doesStartWithRootPath = isRootStartingWithFilePath(rootPath, filePath);
+
+      expect(doesStartWithRootPath).toBe(false);
+    });
+
+    it('should return false if the root path partially matches the file path', function () {
+      const rootPath = 'foo/bar/biz';
+      const filePath = 'random-path/foo/bar/biz-blah/lib/boo.js';
+      const doesStartWithRootPath = isRootStartingWithFilePath(rootPath, filePath);
+
+      expect(doesStartWithRootPath).toBe(false);
     });
   });
 });
