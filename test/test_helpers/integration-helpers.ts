@@ -47,11 +47,15 @@ export async function initFileStructure(files) {
   };
 }
 
-export async function createProject(files, connection: MessageConnection): Promise<{ normalizedPath: string; result: UnknownResult; destroy(): void }> {
+export async function createProject(
+  files,
+  connection: MessageConnection,
+  projectName?: string
+): Promise<{ normalizedPath: string; result: UnknownResult; destroy(): void }> {
   const dir = await createTempDir();
 
   dir.write(files);
-  const normalizedPath = path.normalize(dir.path());
+  const normalizedPath = projectName ? path.normalize(path.join(dir.path(), projectName)) : path.normalize(dir.path());
 
   const params = {
     command: 'els.registerProjectPath',
@@ -82,8 +86,8 @@ export function textDocument(modelPath, position = { line: 0, character: 0 }) {
   return params;
 }
 
-export async function getResult(reqType, connection: MessageConnection, files, fileToInspect, position) {
-  const { normalizedPath, destroy, result } = await createProject(files, connection);
+export async function getResult(reqType, connection: MessageConnection, files, fileToInspect, position, projectName?: string) {
+  const { normalizedPath, destroy, result } = await createProject(files, connection, projectName);
   const modelPath = path.join(normalizedPath, fileToInspect);
   const params = textDocument(modelPath, position);
 
@@ -92,7 +96,11 @@ export async function getResult(reqType, connection: MessageConnection, files, f
 
   await destroy();
 
-  return { response: normalizeUri(response, normalizedPath), registry: normalizeRegistry(normalizedPath, result.registry as Registry) };
+  return {
+    response: normalizeUri(response, normalizedPath),
+    registry: normalizeRegistry(normalizedPath, result.registry as Registry),
+    addonsMeta: normalizeAddonsMeta(normalizedPath, result.addonsMeta as { name: string; root: string }[]),
+  };
 }
 
 export function openFile(connection: MessageConnection, filePath: string) {
@@ -113,6 +121,14 @@ function replaceTempUriPart(uri: string, base: string) {
   const basePath = normalizePath(URI.parse(base).fsPath);
 
   return fsPath.split(basePath).pop();
+}
+
+export function normalizeAddonsMeta(root: string, addonsMeta: { root: string; name: string }[]) {
+  return addonsMeta.map((el) => {
+    el.root = normalizePath(path.relative(root, el.root));
+
+    return el;
+  });
 }
 
 export function normalizeRegistry(root: string, registry: Registry) {
