@@ -326,6 +326,8 @@ Object {
   "registry": Object {
     "component": Object {
       "bar": Array [
+        "../lib/foo/addon/templates/components/bar.hbs",
+        "../lib/foo/app/components/bar.js",
         "lib/biz/addon/templates/components/bar.hbs",
       ],
     },
@@ -1402,6 +1404,27 @@ Array [
   Object {
     "detail": "Ember",
     "kind": 3,
+    "label": "has-block-params",
+    "textEdit": Object {
+      "newText": "has-block-params",
+      "range": Object {
+        "end": Object {
+          "character": 8,
+          "line": 0,
+        },
+        "start": Object {
+          "character": 8,
+          "line": 0,
+        },
+      },
+    },
+    "usableIn": Array [
+      "SubExpressionPath",
+    ],
+  },
+  Object {
+    "detail": "Ember",
+    "kind": 3,
     "label": "if",
     "textEdit": Object {
       "newText": "if",
@@ -1711,6 +1734,27 @@ Array [
     "label": "has-block",
     "textEdit": Object {
       "newText": "has-block",
+      "range": Object {
+        "end": Object {
+          "character": 13,
+          "line": 0,
+        },
+        "start": Object {
+          "character": 13,
+          "line": 0,
+        },
+      },
+    },
+    "usableIn": Array [
+      "SubExpressionPath",
+    ],
+  },
+  Object {
+    "detail": "Ember",
+    "kind": 3,
+    "label": "has-block-params",
+    "textEdit": Object {
+      "newText": "has-block-params",
       "range": Object {
         "end": Object {
           "character": 13,
@@ -2367,6 +2411,42 @@ Object {
 }
 `;
 
+exports[`integration Go to definition works for all supported cases go to definition from app to nested utils location of in repo addon 1`] = `
+Object {
+  "addonsMeta": Array [
+    Object {
+      "name": "biz",
+      "root": "lib/biz",
+    },
+  ],
+  "registry": Object {
+    "component": Object {
+      "darling": Array [
+        "app/components/darling/index.js",
+      ],
+      "hello": Array [
+        "app/components/hello.js",
+      ],
+    },
+  },
+  "response": Array [
+    Object {
+      "range": Object {
+        "end": Object {
+          "character": 0,
+          "line": 0,
+        },
+        "start": Object {
+          "character": 0,
+          "line": 0,
+        },
+      },
+      "uri": "/lib/biz/addon/utils/boo/blah/zoo/bar.js",
+    },
+  ],
+}
+`;
+
 exports[`integration Go to definition works for all supported cases go to definition from handlebars template working if we have test for component 1`] = `
 Object {
   "addonsMeta": Array [],
@@ -2678,6 +2758,7 @@ Object {
       "triggerCharacters": Array [
         ".",
         "::",
+        "$",
         "=",
         "/",
         "{{",
