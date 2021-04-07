@@ -2668,6 +2668,45 @@ Object {
 }
 `;
 
+exports[`integration Go to definition works for all supported cases support parent project addon calling child project 1`] = `
+Object {
+  "addonsMeta": Array [
+    Object {
+      "name": "biz",
+      "root": "lib/biz",
+    },
+    Object {
+      "name": "box",
+      "root": "../lib/box",
+    },
+    Object {
+      "name": "foo",
+      "root": "../lib/foo",
+    },
+  ],
+  "registry": Object {
+    "component": Object {
+      "bar": Array [
+        "../lib/foo/addon/components/bar.js",
+        "lib/biz/addon/components/bar.js",
+        "../lib/box/addon/components/bar.js",
+      ],
+    },
+    "helper": Object {
+      "blah": Array [
+        "tests/helpers/blah.js",
+      ],
+    },
+    "routePath": Object {
+      "hello": Array [
+        "app/templates/hello.hbs",
+      ],
+    },
+  },
+  "response": Array [],
+}
+`;
+
 exports[`integration Go to definition works for all supported cases to children route from application outlet 1`] = `
 Object {
   "addonsMeta": Array [],

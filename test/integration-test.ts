@@ -364,7 +364,7 @@ describe('integration', function () {
 
       expect(result).toMatchSnapshot();
     });
-    it('support parent project addon calling another parent project addon', async () => {
+    it('support parent project addon calling child project', async () => {
       jest.setTimeout(15000);
       const result = await getResult(
         DefinitionRequest.method,
@@ -372,6 +372,7 @@ describe('integration', function () {
         {
           'full-project': {
             'app/templates/hello.hbs': '',
+            'tests/helpers/blah.js': '',
             lib: {
               biz: {
                 'addon/components/bar.js': '',
@@ -405,7 +406,7 @@ describe('integration', function () {
           lib: {
             foo: {
               addon: {
-                'components/bar.js': 'import Boo from "box/components/bar"',
+                'components/bar.js': 'import Blah from "full-project/tests/helpers/blah"',
               },
               'package.json': JSON.stringify({
                 name: 'foo',
@@ -425,7 +426,7 @@ describe('integration', function () {
             },
             box: {
               addon: {
-                'components/bar/js': '',
+                'components/bar.js': '',
               },
               'package.json': JSON.stringify({
                 name: 'box',
