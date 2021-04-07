@@ -364,6 +364,94 @@ describe('integration', function () {
 
       expect(result).toMatchSnapshot();
     });
+    it('support parent project addon calling another parent project addon', async () => {
+      jest.setTimeout(15000);
+      const result = await getResult(
+        DefinitionRequest.method,
+        connection,
+        {
+          'full-project': {
+            'app/templates/hello.hbs': '',
+            lib: {
+              biz: {
+                'addon/components/bar.js': '',
+                'package.json': JSON.stringify({
+                  name: 'biz',
+                  keywords: ['ember-addon'],
+                  dependencies: {},
+                  'ember-addon': {
+                    paths: ['../../../lib/foo', '../../../lib/box'],
+                  },
+                }),
+                'index.js': `/* eslint-env node */
+                'use strict';
+                
+                module.exports = {
+                  name: 'biz',
+                
+                  isDevelopingAddon() {
+                    return true;
+                  }
+                };`,
+              },
+            },
+            'package.json': JSON.stringify({
+              dependencies: { 'ember-holy-futuristic-template-namespacing-batman': '^1.0.2' },
+              'ember-addon': {
+                paths: ['lib/biz'],
+              },
+            }),
+          },
+          lib: {
+            foo: {
+              addon: {
+                'components/bar.js': 'import Boo from "box/components/bar"',
+              },
+              'package.json': JSON.stringify({
+                name: 'foo',
+                keywords: ['ember-addon'],
+                dependencies: {},
+              }),
+              'index.js': `/* eslint-env node */
+              'use strict';
+              
+              module.exports = {
+                name: 'foo',
+              
+                isDevelopingAddon() {
+                  return true;
+                }
+              };`,
+            },
+            box: {
+              addon: {
+                'components/bar/js': '',
+              },
+              'package.json': JSON.stringify({
+                name: 'box',
+                keywords: ['ember-addon'],
+                dependencies: {},
+              }),
+              'index.js': `/* eslint-env node */
+              'use strict';
+              
+              module.exports = {
+                name: 'box',
+              
+                isDevelopingAddon() {
+                  return true;
+                }
+              };`,
+            },
+          },
+        },
+        '../lib/foo/addon/components/bar.js',
+        { line: 0, character: 8 },
+        'full-project'
+      );
+
+      expect(result).toMatchSnapshot();
+    });
     it('go to definition from handlebars template working if we have test for component', async () => {
       const result = await getResult(
         DefinitionRequest.method,
