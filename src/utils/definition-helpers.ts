@@ -6,7 +6,6 @@ import { Location, Range } from 'vscode-languageserver/node';
 import { URI } from 'vscode-uri';
 
 import { isModuleUnificationApp, podModulePrefixForRoot, hasAddonFolderInPath, getProjectAddonsRoots, getProjectInRepoAddonsRoots } from './layout-helpers';
-import { logInfo } from './logger';
 
 const mProjectAddonsRoots = memoize(getProjectAddonsRoots, {
   length: 1,
