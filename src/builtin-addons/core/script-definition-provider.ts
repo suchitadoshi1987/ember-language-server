@@ -14,7 +14,7 @@ import {
   isImportSpecifier,
 } from './../../utils/ast-helpers';
 import { normalizeServiceName } from '../../utils/normalizers';
-import { isModuleUnificationApp, podModulePrefixForRoot } from './../../utils/layout-helpers';
+import { getPackageJSON, isModuleUnificationApp, podModulePrefixForRoot } from './../../utils/layout-helpers';
 import { provideRouteDefinition } from './template-definition-provider';
 import { logInfo } from '../../utils/logger';
 
@@ -72,9 +72,18 @@ class PathResolvers {
     const pathParts = pathName.split('/');
 
     pathParts.shift();
-    const appParams = [root, 'app', ...pathParts];
+    const mayBePathParams = [
+      [root, 'app', ...pathParts],
+      [root, 'tests', ...pathParts],
+    ];
 
-    return joinPaths(...appParams);
+    let maybePaths: string[] = [];
+
+    mayBePathParams.forEach((item) => {
+      maybePaths = maybePaths.concat(joinPaths(...item));
+    });
+
+    return maybePaths;
   }
   muImportPaths(root: string, pathName: string) {
     const pathParts = pathName.split('/');
@@ -185,9 +194,19 @@ export default class CoreScriptDefinitionProvider {
     } else if (isImportSpecifier(astPath)) {
       logInfo(`Handle script import for Project "${project.name}"`);
       const pathName: string = ((astPath.parentFromLevel(2) as unknown) as t.ImportDeclaration).source.value;
+      const pathPaths = pathName.split('/');
+      const maybeAppName = pathPaths.shift();
 
       project.roots.forEach((projectRoot) => {
-        const potentialPaths = this.guessPathForImport(projectRoot, uri, pathName) || [];
+        const pkg = getPackageJSON(projectRoot);
+        let potentialPaths: Location[];
+
+        // If the start of the pathname is same as the project name, then use that as the root.
+        if (pkg.name === maybeAppName) {
+          potentialPaths = this.guessPathForImport(projectRoot, uri, pathPaths.join('/')) || [];
+        } else {
+          potentialPaths = this.guessPathForImport(projectRoot, uri, pathName) || [];
+        }
 
         definitions = definitions.concat(potentialPaths);
       });
