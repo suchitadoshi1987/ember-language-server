@@ -14,7 +14,7 @@ import {
   isImportSpecifier,
 } from './../../utils/ast-helpers';
 import { normalizeServiceName } from '../../utils/normalizers';
-import { getPackageJSON, isModuleUnificationApp, podModulePrefixForRoot } from './../../utils/layout-helpers';
+import { isModuleUnificationApp, podModulePrefixForRoot } from './../../utils/layout-helpers';
 import { provideRouteDefinition } from './template-definition-provider';
 import { logInfo } from '../../utils/logger';
 
@@ -72,19 +72,15 @@ class PathResolvers {
     const pathParts = pathName.split('/');
 
     pathParts.shift();
-    const mayBePathParams = [
-      [root, 'app', ...pathParts],
-      [root, 'tests', ...pathParts],
-    ];
+    const appParams = [root, 'app', ...pathParts];
 
-    let maybePaths: string[] = [];
-
-    mayBePathParams.forEach((item) => {
-      maybePaths = maybePaths.concat(joinPaths(...item));
-    });
-
-    return maybePaths;
+    return joinPaths(...appParams);
   }
+
+  resolveTestScopeImport(root: string, pathName: string) {
+    return joinPaths(path.join(root, pathName));
+  }
+
   muImportPaths(root: string, pathName: string) {
     const pathParts = pathName.split('/');
 
@@ -119,6 +115,10 @@ export default class CoreScriptDefinitionProvider {
     }
 
     this.resolvers.addonImportPaths(root, importPath).forEach((pathLocation: string) => {
+      guessedPaths.push(pathLocation);
+    });
+
+    this.resolvers.resolveTestScopeImport(root, importPath).forEach((pathLocation: string) => {
       guessedPaths.push(pathLocation);
     });
 
@@ -194,22 +194,23 @@ export default class CoreScriptDefinitionProvider {
     } else if (isImportSpecifier(astPath)) {
       logInfo(`Handle script import for Project "${project.name}"`);
       const pathName: string = ((astPath.parentFromLevel(2) as unknown) as t.ImportDeclaration).source.value;
-      const pathPaths = pathName.split('/');
-      const maybeAppName = pathPaths.shift();
+      const pathParts = pathName.split('/');
+      let maybeAppName = pathParts.shift();
 
-      project.roots.forEach((projectRoot) => {
-        const pkg = getPackageJSON(projectRoot);
-        let potentialPaths: Location[];
+      if (maybeAppName && maybeAppName.startsWith('@')) {
+        maybeAppName = maybeAppName + path.sep + pathParts.shift();
+      }
 
-        // If the start of the pathname is same as the project name, then use that as the root.
-        if (pkg.name === maybeAppName) {
-          potentialPaths = this.guessPathForImport(projectRoot, uri, pathPaths.join('/')) || [];
-        } else {
-          potentialPaths = this.guessPathForImport(projectRoot, uri, pathName) || [];
-        }
+      let potentialPaths: Location[];
 
-        definitions = definitions.concat(potentialPaths);
-      });
+      // If the start of the pathname is same as the project name, then use that as the root.
+      if (project.name === maybeAppName) {
+        potentialPaths = this.guessPathForImport(project.root, uri, pathParts.join('/')) || [];
+      } else {
+        potentialPaths = this.guessPathForImport(project.root, uri, pathName) || [];
+      }
+
+      definitions = definitions.concat(potentialPaths);
     } else if (isServiceInjection(astPath)) {
       let serviceName = ((astPath.node as unknown) as t.Identifier).name;
       const args = astPath.parent.value.arguments;

@@ -1593,7 +1593,6 @@ describe('integration', function () {
     });
 
     it('support parent project addon calling child project', async () => {
-      jest.setTimeout(15000);
       const result = await getResult(
         DefinitionRequest.method,
         connection,
