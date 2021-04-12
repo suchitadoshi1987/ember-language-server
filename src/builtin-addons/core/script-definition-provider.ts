@@ -118,10 +118,6 @@ export default class CoreScriptDefinitionProvider {
       guessedPaths.push(pathLocation);
     });
 
-    this.resolvers.resolveTestScopeImport(root, importPath).forEach((pathLocation: string) => {
-      guessedPaths.push(pathLocation);
-    });
-
     return pathsToLocations(...guessedPaths);
   }
   guessPathsForType(root: string, fnName: ItemType, typeName: string) {
@@ -198,14 +194,21 @@ export default class CoreScriptDefinitionProvider {
       let maybeAppName = pathParts.shift();
 
       if (maybeAppName && maybeAppName.startsWith('@')) {
-        maybeAppName = maybeAppName + path.sep + pathParts.shift();
+        maybeAppName = maybeAppName + '/' + pathParts.shift();
       }
 
       let potentialPaths: Location[];
+      const addonInfo = project.addonsMeta.find(({ name }) => pathName.startsWith(name + '/tests'));
 
       // If the start of the pathname is same as the project name, then use that as the root.
-      if (project.name === maybeAppName) {
-        potentialPaths = this.guessPathForImport(project.root, uri, pathParts.join('/')) || [];
+      if (project.name === maybeAppName && pathName.startsWith(project.name + '/tests')) {
+        const importPaths = this.resolvers.resolveTestScopeImport(project.root, pathParts.join(path.sep));
+
+        potentialPaths = pathsToLocations(...importPaths);
+      } else if (addonInfo) {
+        const importPaths = this.resolvers.resolveTestScopeImport(addonInfo.root, pathName);
+
+        potentialPaths = pathsToLocations(...importPaths);
       } else {
         potentialPaths = this.guessPathForImport(project.root, uri, pathName) || [];
       }
