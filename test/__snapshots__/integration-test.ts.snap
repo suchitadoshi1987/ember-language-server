@@ -2740,7 +2740,7 @@ Object {
     },
   },
   "serverInfo": Object {
-    "name": "@lifeart/ember-language-server",
+    "name": "@suchitadoshi1987/ember-language-server",
   },
 }
 `;
