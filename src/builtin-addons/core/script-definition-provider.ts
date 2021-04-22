@@ -17,6 +17,7 @@ import { normalizeServiceName } from '../../utils/normalizers';
 import { isModuleUnificationApp, podModulePrefixForRoot } from './../../utils/layout-helpers';
 import { provideRouteDefinition } from './template-definition-provider';
 import { logInfo } from '../../utils/logger';
+import { Project } from '../../project';
 
 type ItemType = 'Model' | 'Transform' | 'Service';
 
@@ -148,6 +149,33 @@ export default class CoreScriptDefinitionProvider {
 
     return pathsToLocations(...guessedPaths);
   }
+
+  getPotentialImportPaths(pathName: string, project: Project, uri: string) {
+    const pathParts = pathName.split('/');
+    let maybeAppName = pathParts.shift();
+
+    if (maybeAppName && maybeAppName.startsWith('@')) {
+      maybeAppName = maybeAppName + '/' + pathParts.shift();
+    }
+
+    let potentialPaths: Location[];
+    const addonInfo = project.addonsMeta.find(({ name }) => pathName.startsWith(name + '/tests'));
+
+    // If the start of the pathname is same as the project name, then use that as the root.
+    if (project.name === maybeAppName && pathName.startsWith(project.name + '/tests')) {
+      const importPaths = this.resolvers.resolveTestScopeImport(project.root, pathParts.join(path.sep));
+
+      potentialPaths = pathsToLocations(...importPaths);
+    } else if (addonInfo) {
+      const importPaths = this.resolvers.resolveTestScopeImport(addonInfo.root, pathName);
+
+      potentialPaths = pathsToLocations(...importPaths);
+    } else {
+      potentialPaths = this.guessPathForImport(project.root, uri, pathName) || [];
+    }
+
+    return potentialPaths;
+  }
   async onDefinition(root: string, params: DefinitionFunctionParams): Promise<Definition | null> {
     const { textDocument, focusPath, type, results, server, position } = params;
 
@@ -186,34 +214,14 @@ export default class CoreScriptDefinitionProvider {
 
       definitions = this.guessPathsForType(root, 'Transform', transformName);
     } else if (isImportPathDeclaration(astPath)) {
-      definitions = this.guessPathForImport(root, uri, ((astPath.node as unknown) as t.StringLiteral).value) || [];
+      const pathName = ((astPath.node as unknown) as t.StringLiteral).value;
+
+      definitions = definitions.concat(this.getPotentialImportPaths(pathName, project, uri));
     } else if (isImportSpecifier(astPath)) {
       logInfo(`Handle script import for Project "${project.name}"`);
       const pathName: string = ((astPath.parentFromLevel(2) as unknown) as t.ImportDeclaration).source.value;
-      const pathParts = pathName.split('/');
-      let maybeAppName = pathParts.shift();
 
-      if (maybeAppName && maybeAppName.startsWith('@')) {
-        maybeAppName = maybeAppName + '/' + pathParts.shift();
-      }
-
-      let potentialPaths: Location[];
-      const addonInfo = project.addonsMeta.find(({ name }) => pathName.startsWith(name + '/tests'));
-
-      // If the start of the pathname is same as the project name, then use that as the root.
-      if (project.name === maybeAppName && pathName.startsWith(project.name + '/tests')) {
-        const importPaths = this.resolvers.resolveTestScopeImport(project.root, pathParts.join(path.sep));
-
-        potentialPaths = pathsToLocations(...importPaths);
-      } else if (addonInfo) {
-        const importPaths = this.resolvers.resolveTestScopeImport(addonInfo.root, pathName);
-
-        potentialPaths = pathsToLocations(...importPaths);
-      } else {
-        potentialPaths = this.guessPathForImport(project.root, uri, pathName) || [];
-      }
-
-      definitions = definitions.concat(potentialPaths);
+      definitions = definitions.concat(this.getPotentialImportPaths(pathName, project, uri));
     } else if (isServiceInjection(astPath)) {
       let serviceName = ((astPath.node as unknown) as t.Identifier).name;
       const args = astPath.parent.value.arguments;

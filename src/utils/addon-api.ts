@@ -39,6 +39,7 @@ export interface ReferenceFunctionParams extends BaseAPIParams {
 }
 export interface CompletionFunctionParams extends ExtendedAPIParams {
   results: CompletionItem[];
+  textPrefix?: string;
 }
 export interface DefinitionFunctionParams extends ExtendedAPIParams {
   results: Location[];

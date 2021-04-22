@@ -39,6 +39,8 @@ export class Project {
   destructors: Destructor[] = [];
   linters: Linter[] = [];
   initIssues: Error[] = [];
+  disableInitialization = false;
+  flags: { enableEagerRegistryInitialization: boolean } = { enableEagerRegistryInitialization: true };
   files: Map<string, { version: number }> = new Map();
   podModulePrefix = '';
   @cached
@@ -160,9 +162,7 @@ export class Project {
     logInfo(`Ember CLI project: ${this.root} unloaded`);
     logInfo('--------------------');
   }
-  flags = {
-    enableEagerRegistryInitialization: true,
-  };
+
   init(server: Server) {
     this.providers.initFunctions.forEach((initFn) => {
       try {

@@ -63,8 +63,6 @@ export default class TemplateCompletionProvider {
             },
           });
 
-    log('originalText', originalText);
-
     if (originalText.trim().length === 0) {
       log('originalText - empty');
 
@@ -157,6 +155,7 @@ export default class TemplateCompletionProvider {
     const focusPath = results.focusPath;
     const originalText = results.originalText;
     const normalPlaceholder = results.normalPlaceholder;
+    const textPrefix = getTextPrefix(focusPath, normalPlaceholder);
 
     const completions: CompletionItem[] = await queryELSAddonsAPIChain(project.builtinProviders.completionProviders, root, {
       focusPath,
@@ -166,6 +165,7 @@ export default class TemplateCompletionProvider {
       server: this.server,
       type: 'template',
       originalText,
+      textPrefix,
     });
 
     const addonResults = await queryELSAddonsAPIChain(project.providers.completionProviders, root, {
@@ -175,8 +175,9 @@ export default class TemplateCompletionProvider {
       results: completions,
       server: this.server,
       type: 'template',
+      textPrefix,
     });
-    const textPrefix = getTextPrefix(focusPath, normalPlaceholder);
+
     const endCharacterPosition = position.character;
 
     if (textPrefix.length) {

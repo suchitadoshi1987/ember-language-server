@@ -127,6 +127,14 @@ export default class Server {
       this.projectRoots.setIgnoredProjects(config.ignoredProjects);
     }
 
+    if (config.disableInitialization) {
+      this.projectRoots.setDisableInitialization(config.disableInitialization);
+    }
+
+    if (config.includeModules) {
+      this.projectRoots.setIncludeModules(config.includeModules);
+    }
+
     if (config.useBuiltinLinting === false) {
       this.templateLinter.disable();
     } else if (config.useBuiltinLinting === true) {

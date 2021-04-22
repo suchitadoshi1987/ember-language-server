@@ -1,11 +1,13 @@
 import * as memoize from 'memoizee';
 import * as walkSync from 'walk-sync';
 import * as fs from 'fs';
+import * as fg from 'fast-glob';
 import * as path from 'path';
 import { CompletionItem, CompletionItemKind } from 'vscode-languageserver/node';
 import { Project } from '../project';
 import { addToRegistry, normalizeMatchNaming } from './registry-api';
 import { clean, coerce, valid } from 'semver';
+import { normalizeToClassicComponent } from '../utils/normalizers';
 
 // const GLOBAL_REGISTRY = ['primitive-name'][['relatedFiles']];
 
@@ -28,7 +30,7 @@ export const podModulePrefixForRoot = memoize(getPodModulePrefix, {
   maxAge: 60000,
 });
 export const mGetProjectAddonsInfo = memoize(getProjectAddonsInfo, {
-  length: 1,
+  length: 2,
   maxAge: 600000,
 }); // 1 second
 
@@ -414,47 +416,55 @@ export function hasAddonFolderInPath(name: string) {
   return name.includes(path.sep + 'addon' + path.sep) || name.includes(path.sep + 'addon-test-support' + path.sep);
 }
 
-export function getProjectAddonsInfo(root: string) {
-  const roots = ([] as string[]).concat(mProjectAddonsRoots(root), mProjectInRepoAddonsRoots(root)).filter((pathItem: unknown) => typeof pathItem === 'string');
-  // log('roots', roots);
-  const meta: CompletionItem[][] = [];
+export function getProjectAddonsInfo(root: string, textPrefix?: string, includeModules?: string[], disableInit?: boolean) {
+  if (textPrefix) {
+    return findByGlob(root, textPrefix, includeModules);
+  }
 
-  roots.forEach((packagePath: string) => {
-    const info = getPackageJSON(packagePath);
-    // log('info', info);
-    const version = addonVersion(info);
+  if (!disableInit) {
+    const roots = ([] as string[])
+      .concat(mProjectAddonsRoots(root), mProjectInRepoAddonsRoots(root))
+      .filter((pathItem: unknown) => typeof pathItem === 'string');
+    // log('roots', roots);
+    const meta: CompletionItem[][] = [];
 
-    if (version === null) {
-      return;
-    }
+    roots.forEach((packagePath: string) => {
+      const info = getPackageJSON(packagePath);
+      // log('info', info);
+      const version = addonVersion(info);
 
-    if (version === 1) {
-      const extractedData = [
-        ...listComponents(packagePath),
-        ...listRoutes(packagePath),
-        ...listHelpers(packagePath),
-        ...listModels(packagePath),
-        ...listTransforms(packagePath),
-        ...listServices(packagePath),
-        ...listModifiers(packagePath),
-      ];
-
-      // log('extractedData', extractedData);
-      if (extractedData.length) {
-        meta.push(extractedData);
+      if (version === null) {
+        return;
       }
-    }
-  });
 
-  const normalizedResult: CompletionItem[] = meta.reduce((arrs: CompletionItem[], item: CompletionItem[]) => {
-    if (!item.length) {
-      return arrs;
-    }
+      if (version === 1) {
+        const extractedData = [
+          ...listComponents(packagePath),
+          ...listRoutes(packagePath),
+          ...listHelpers(packagePath),
+          ...listModels(packagePath),
+          ...listTransforms(packagePath),
+          ...listServices(packagePath),
+          ...listModifiers(packagePath),
+        ];
 
-    return arrs.concat(item);
-  }, []);
+        // log('extractedData', extractedData);
+        if (extractedData.length) {
+          meta.push(extractedData);
+        }
+      }
+    });
 
-  return normalizedResult;
+    const normalizedResult: CompletionItem[] = meta.reduce((arrs: CompletionItem[], item: CompletionItem[]) => {
+      if (!item.length) {
+        return arrs;
+      }
+
+      return arrs.concat(item);
+    }, []);
+
+    return normalizedResult;
+  }
 }
 
 export function pureComponentName(relativePath: string) {
@@ -588,6 +598,78 @@ export function listComponents(_root: string): CompletionItem[] {
 
   const items = paths.map((filePath: string) => {
     const label = pureComponentName(filePath);
+
+    return {
+      kind: CompletionItemKind.Class,
+      label,
+      detail: 'component',
+    };
+  });
+
+  return items;
+}
+
+function findByGlob(root: string, textPrefix: string, includeModules?: string[]) {
+  const isNameSpaced = hasNamespaceSupport(root);
+  const prefixData = normalizeToClassicComponent(textPrefix.split('$')[0]);
+  let paths = [];
+
+  if (isNameSpaced) {
+    paths = fg.sync(
+      [`${root}/(lib|engines)/${prefixData}*/addon/templates/components/**/*.{js,hbs}`, `${root}/(lib|engines)/${prefixData}*/addon/components/**/*.{js,hbs}`],
+      { ignore: ['**/node_modules/**'] }
+    );
+
+    if (!paths.length && includeModules && includeModules.length) {
+      const modules = includeModules.length === 1 ? includeModules[0] : `(${includeModules.join('|')})`;
+
+      paths = fg.sync([
+        `${root}/node_modules/${modules}/${prefixData}*/addon/templates/components/**/*.{js,hbs}`,
+        `${root}/node_modules/${modules}/${prefixData}*/addon/components/**/*.{js,hbs}`,
+      ]);
+    }
+  } else {
+    paths = fg.sync(
+      [
+        `${root}/(lib|engines)/**/addon/templates/components/**/${prefixData}*.{js,hbs}`,
+        `${root}/(lib|engines)/**/addon/components/**/${prefixData}*.{js,hbs}`,
+      ],
+      { ignore: ['**/node_modules/**'] }
+    );
+
+    if (!paths.length && includeModules && includeModules.length) {
+      const modules = includeModules.length === 1 ? includeModules[0] : `(${includeModules.join('|')})`;
+
+      paths = fg.sync([
+        `${root}/node_modules/${modules}/**/addon/templates/components/**/${prefixData}*.{js,hbs}`,
+        `${root}/node_modules/${modules}/**/addon/components/**/${prefixData}*.{js,hbs}`,
+      ]);
+    }
+  }
+
+  const items = paths.map((filePath: string) => {
+    const templateSplit = filePath.split('/templates/components/');
+    let label = '';
+
+    if (templateSplit.length > 1) {
+      label = pureComponentName(templateSplit[1]);
+    } else {
+      const componentSplit = filePath.split('/components/');
+
+      if (componentSplit.length > 1) {
+        label = pureComponentName(componentSplit[1]);
+      }
+    }
+
+    const addonRoot = filePath.split('/addon')[0];
+    const info = getPackageJSON(addonRoot);
+
+    if (info && info.name && isNameSpaced) {
+      const rootNameParts = info.name.split('/');
+      const addonName = rootNameParts.pop() || '';
+
+      label = `${addonName}$${label}`;
+    }
 
     return {
       kind: CompletionItemKind.Class,

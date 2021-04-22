@@ -19,6 +19,9 @@ export default class ProjectRoots {
 
   localAddons: string[] = [];
   ignoredProjects: string[] = [];
+  ignoredProjectRoots: string[] = [];
+  disableInitialization = false;
+  includeModules: string[] = [];
 
   reloadProjects() {
     Array.from(this.projects).forEach(([root]) => {
@@ -55,6 +58,14 @@ export default class ProjectRoots {
 
   setIgnoredProjects(ignoredProjects: string[]) {
     this.ignoredProjects = ignoredProjects;
+  }
+
+  setIncludeModules(includeModules: string[]) {
+    this.includeModules = includeModules;
+  }
+
+  setDisableInitialization(disableInitialization: boolean) {
+    this.disableInitialization = disableInitialization || false;
   }
 
   findProjectsInsideRoot(workspaceRoot: string) {
@@ -106,6 +117,7 @@ export default class ProjectRoots {
     try {
       const project = new Project(projectPath, this.localAddons);
 
+      project.flags.enableEagerRegistryInitialization = !this.disableInitialization;
       this.projects.set(projectPath, project);
       logInfo(`Ember CLI project added at ${projectPath}`);
       project.init(this.server);
@@ -148,6 +160,10 @@ export default class ProjectRoots {
         const projectName = this.projects.get(root)?.name;
 
         if (projectName && this.ignoredProjects.includes(projectName)) {
+          if (!this.ignoredProjectRoots.includes(root)) {
+            this.ignoredProjectRoots.push(root);
+          }
+
           return;
         }
 

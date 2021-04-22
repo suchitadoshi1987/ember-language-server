@@ -1,5 +1,6 @@
 import * as path from 'path';
 import * as fs from 'fs';
+import * as fg from 'fast-glob';
 
 import { Definition, Location } from 'vscode-languageserver/node';
 import { DefinitionFunctionParams } from './../../utils/addon-api';
@@ -23,6 +24,8 @@ import { URI } from 'vscode-uri';
 import { ASTv1 } from '@glimmer/syntax';
 import { Project } from '../../project';
 import Server from '../../server';
+import { performance } from 'perf_hooks';
+import { log } from '../../utils/logger';
 
 const mAddonPathsForComponentTemplates = memoize(getAddonPathsForComponentTemplates, { length: 2, maxAge: 600000 });
 
@@ -34,6 +37,16 @@ function getComponentAndAddonName(rawComponentName: string) {
   const componentName = componentParts.pop() as string;
 
   return { addonName: normalizeToClassicComponent(addonName), componentName };
+}
+
+// const mGetAddonPathsFromGlob = memoize(getAddonPathsFromGlob, { length: 3, maxAge: 600000 });
+
+function getAddonPathsFromGlob(projectParentPath: string, maybeComponentName: string, addonName?: string) {
+  if (addonName) {
+    return fg.sync([`${projectParentPath}/(lib|engines)/${addonName}/addon/**/${maybeComponentName}.hbs`], { ignore: ['**/node_modules/**'] });
+  }
+
+  return fg.sync([`${projectParentPath}/(lib|engines)/**/addon/**/${maybeComponentName}.hbs`], { ignore: ['**/node_modules/**'] });
 }
 
 export function getPathsFromRegistry(type: 'helper' | 'modifier' | 'component', name: string, root: string): string[] {
@@ -108,6 +121,7 @@ export default class TemplateDefinitionProvider {
   async onDefinition(root: string, params: DefinitionFunctionParams): Promise<Definition | null> {
     const uri = params.textDocument.uri;
 
+    const t0 = performance.now();
     const focusPath = params.focusPath;
     let definitions: Location[] = params.results;
 
@@ -125,6 +139,9 @@ export default class TemplateDefinitionProvider {
     } else if (this.isAngleComponent(focusPath)) {
       // <FooBar />
       definitions = this.provideAngleBrackedComponentDefinition(focusPath);
+      const t1 = performance.now();
+
+      log(`template definition perfromance ${t1 - t0}`);
       // {{#foo-bar}} {{/foo-bar}}
     } else if (this.isComponentWithBlock(focusPath)) {
       definitions = this.provideBlockComponentDefinition(root, focusPath);
@@ -203,6 +220,20 @@ export default class TemplateDefinitionProvider {
       }
     }
 
+    if (!paths.length) {
+      const projectRoots = [...this.server.projectRoots.ignoredProjectRoots, root];
+
+      for (let i = 0; i < projectRoots.length; i++) {
+        const rootData = projectRoots[i];
+
+        paths = getAddonPathsFromGlob(rootData, maybeComponentName, addonName);
+
+        if (paths.length) {
+          return paths;
+        }
+      }
+    }
+
     return paths;
   }
   provideLikelyComponentTemplatePath(rawComponentName: string): Location[] {
@@ -211,14 +242,12 @@ export default class TemplateDefinitionProvider {
 
     const paths: string[] = [];
 
-    this.project.roots.forEach((root) => {
-      const localPaths = this._provideLikelyRawComponentTemplatePaths(root, componentName, addonName);
+    const localPaths = this._provideLikelyRawComponentTemplatePaths(this.project.root, componentName, addonName);
 
-      localPaths.forEach((p) => {
-        if (!paths.includes(p)) {
-          paths.push(p);
-        }
-      });
+    localPaths.forEach((p) => {
+      if (!paths.includes(p)) {
+        paths.push(p);
+      }
     });
 
     return pathsToLocations(...(paths.length > 1 ? paths.filter((postfix: string) => isTemplatePath(postfix)) : paths));

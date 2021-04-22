@@ -44,6 +44,7 @@ import { normalizeToAngleBracketComponent } from '../../utils/normalizers';
 import { getTemplateBlocks } from '../../utils/template-tokens-collector';
 import { ASTNode } from 'ast-types';
 import { ASTv1 } from '@glimmer/syntax';
+import { performance } from 'perf_hooks';
 
 const mTemplateContextLookup = memoize(templateContextLookup, {
   length: 3,
@@ -181,10 +182,23 @@ export default class TemplateCompletionProvider {
       logInfo('EagerRegistryInitialization is disabled for "' + project.name + '" (template-completion-provider)');
     }
   }
-  getAllAngleBracketComponents(root: string, uri: string) {
-    const items: CompletionItem[] = [];
+  getAllAngleBracketComponents(root: string, uri: string, textPrefix?: string, includeModules?: string[]) {
+    let items: CompletionItem[] = [];
 
-    if (!this.meta.projectAddonsInfoInitialized) {
+    if (textPrefix && this.server.projectRoots.disableInitialization) {
+      const components = mGetProjectAddonsInfo(root, textPrefix, includeModules, true) || [];
+
+      items = uniqBy(
+        items.concat(components).map((item: CompletionItem) => {
+          return Object.assign({}, item, {
+            label: normalizeToAngleBracketComponent(item.label),
+          });
+        }),
+        'label'
+      );
+    }
+
+    if (!this.server.projectRoots.disableInitialization && !this.meta.projectAddonsInfoInitialized) {
       mGetProjectAddonsInfo(root);
       this.enableRegistryCache('projectAddonsInfoInitialized');
     }
@@ -231,8 +245,20 @@ export default class TemplateCompletionProvider {
 
     return candidates;
   }
-  getMustachePathCandidates(root: string) {
-    if (!this.meta.projectAddonsInfoInitialized) {
+  getMustachePathCandidates(root: string, textPrefix?: string, includeModules?: string[]) {
+    let candidates: CompletionItem[] = [];
+
+    if (textPrefix && this.server.projectRoots.disableInitialization) {
+      const components = mGetProjectAddonsInfo(root, textPrefix, includeModules, true) || [];
+
+      candidates = candidates.concat(components).map((item: CompletionItem) => {
+        return Object.assign({}, item, {
+          label: item.label,
+        });
+      });
+    }
+
+    if (!this.server.projectRoots.disableInitialization && !this.meta.projectAddonsInfoInitialized) {
       mGetProjectAddonsInfo(root);
       this.enableRegistryCache('projectAddonsInfoInitialized');
     }
@@ -259,7 +285,7 @@ export default class TemplateCompletionProvider {
 
     const registry = this.server.getRegistry(this.project.roots);
 
-    const candidates: CompletionItem[] = [
+    candidates = candidates.concat([
       ...Object.keys(registry.component).map((rawName) => {
         return {
           label: rawName,
@@ -274,9 +300,9 @@ export default class TemplateCompletionProvider {
           detail: 'helper',
         };
       }),
-    ];
+    ]);
 
-    return candidates;
+    return uniqBy(candidates, 'label');
   }
   getBlockPathCandidates(root: string): CompletionItem[] {
     if (!this.meta.projectAddonsInfoInitialized) {
@@ -386,10 +412,11 @@ export default class TemplateCompletionProvider {
       return params.results;
     }
 
-    const completions: CompletionItem[] = params.results;
+    let completions: CompletionItem[] = params.results;
     const focusPath = params.focusPath;
     const uri = params.textDocument.uri;
     const originalText = params.originalText || '';
+    const includeModules = this.server.projectRoots.includeModules;
 
     try {
       if (isNamedBlockName(focusPath)) {
@@ -401,11 +428,21 @@ export default class TemplateCompletionProvider {
       } else if (isAngleComponentPath(focusPath) && !isNamedBlockName(focusPath)) {
         log('isAngleComponentPath');
         // <Foo>
-        const candidates = this.getAllAngleBracketComponents(root, uri);
-        const scopedValues = this.getScopedValues(focusPath);
+        const t0 = performance.now();
 
-        log(candidates, scopedValues);
-        completions.push(...uniqBy([...candidates, ...scopedValues], 'label'));
+        const projectRoots = [...this.server.projectRoots.ignoredProjectRoots, root];
+
+        projectRoots.forEach((projectRoot) => {
+          const candidates = this.getAllAngleBracketComponents(projectRoot, uri, params.textPrefix, includeModules);
+          const t1 = performance.now();
+
+          log(`get angle components ${t1 - t0}`);
+          const scopedValues = this.getScopedValues(focusPath);
+
+          // log(candidates, scopedValues);
+          completions.push(...uniqBy([...candidates, ...scopedValues], 'label'));
+        });
+        completions = uniqBy(completions, 'label');
       } else if (isComponentArgumentName(focusPath)) {
         // <Foo @name.. />
 
@@ -472,7 +509,14 @@ export default class TemplateCompletionProvider {
       } else if (isMustachePath(focusPath)) {
         // {{foo-bar?}}
         log('isMustachePath');
-        const candidates = this.getMustachePathCandidates(root);
+        const projectRoots = [...this.server.projectRoots.ignoredProjectRoots, root];
+
+        let candidates: CompletionItem[] = [];
+
+        projectRoots.forEach((projectRoot) => {
+          candidates = candidates.concat(this.getMustachePathCandidates(projectRoot, params.textPrefix, includeModules));
+        });
+        candidates = uniqBy(candidates, 'label');
         const localCandidates = this.getLocalPathExpressionCandidates(root, uri, originalText);
 
         if (isScopedPathExpression(focusPath)) {
@@ -584,6 +628,7 @@ export default class TemplateCompletionProvider {
     }
 
     if (this.hasNamespaceSupport) {
+      const t0 = performance.now();
       const hasSomeComponents = completions.some((completion) => completion.detail === 'component');
 
       if (hasSomeComponents) {
@@ -605,6 +650,10 @@ export default class TemplateCompletionProvider {
             newCompletions.push(completionItem);
           }
         });
+
+        const t1 = performance.now();
+
+        log(`Template completion time took: ${t1 - t0}ms`);
 
         return newCompletions;
       }
