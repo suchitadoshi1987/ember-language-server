@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as t from '@babel/types';
 import { Definition, Location } from 'vscode-languageserver/node';
 import { DefinitionFunctionParams } from './../../utils/addon-api';
-import { pathsToLocations, getAddonPathsForType, getAddonImport } from '../../utils/definition-helpers';
+import { importPathsToLocations, pathsToLocations, getAddonPathsForType, getAddonImport } from '../../utils/definition-helpers';
 import {
   isRouteLookup,
   isTransformReference,
@@ -12,6 +12,7 @@ import {
   isNamedServiceInjection,
   isTemplateElement,
   isImportSpecifier,
+  isImportDefaultSpecifier,
 } from './../../utils/ast-helpers';
 import { normalizeServiceName } from '../../utils/normalizers';
 import { isModuleUnificationApp, podModulePrefixForRoot } from './../../utils/layout-helpers';
@@ -97,7 +98,7 @@ export default class CoreScriptDefinitionProvider {
   constructor() {
     this.resolvers = new PathResolvers();
   }
-  guessPathForImport(root: string, uri: string, importPath: string) {
+  guessPathForImport(root: string, uri: string, importPath: string, importSpecifierName?: string) {
     if (!uri) {
       return null;
     }
@@ -119,7 +120,7 @@ export default class CoreScriptDefinitionProvider {
       guessedPaths.push(pathLocation);
     });
 
-    return pathsToLocations(...guessedPaths);
+    return importPathsToLocations(guessedPaths, importSpecifierName);
   }
   guessPathsForType(root: string, fnName: ItemType, typeName: string) {
     const guessedPaths: string[] = [];
@@ -150,7 +151,21 @@ export default class CoreScriptDefinitionProvider {
     return pathsToLocations(...guessedPaths);
   }
 
-  getPotentialImportPaths(pathName: string, project: Project, uri: string) {
+  getImportSpecifierName(importDeclaration: t.ImportDeclaration, position: any) {
+    const importNameData = importDeclaration.specifiers.find((item) => {
+      const importLine = item.loc?.start.line;
+      const importStartCol = item.loc?.start.column;
+      const importStartEnd = item.loc?.end.column;
+
+      return (
+        importStartCol && importStartEnd && position.line + 1 === importLine && importStartCol <= position.character && importStartEnd >= position.character
+      );
+    }) as t.ImportSpecifier;
+
+    return importNameData && importNameData.type === 'ImportSpecifier' ? (importNameData.imported as t.Identifier).name : '';
+  }
+
+  getPotentialImportPaths(pathName: string, project: Project, uri: string, importSpecifierName?: string) {
     const pathParts = pathName.split('/');
     let maybeAppName = pathParts.shift();
 
@@ -165,13 +180,13 @@ export default class CoreScriptDefinitionProvider {
     if (project.name === maybeAppName && pathName.startsWith(project.name + '/tests')) {
       const importPaths = this.resolvers.resolveTestScopeImport(project.root, pathParts.join(path.sep));
 
-      potentialPaths = pathsToLocations(...importPaths);
+      potentialPaths = importPathsToLocations(importPaths, importSpecifierName);
     } else if (addonInfo) {
       const importPaths = this.resolvers.resolveTestScopeImport(addonInfo.root, pathName);
 
-      potentialPaths = pathsToLocations(...importPaths);
+      potentialPaths = importPathsToLocations(importPaths, importSpecifierName);
     } else {
-      potentialPaths = this.guessPathForImport(project.root, uri, pathName) || [];
+      potentialPaths = this.guessPathForImport(project.root, uri, pathName, importSpecifierName) || [];
     }
 
     return potentialPaths;
@@ -217,11 +232,17 @@ export default class CoreScriptDefinitionProvider {
       const pathName = ((astPath.node as unknown) as t.StringLiteral).value;
 
       definitions = definitions.concat(this.getPotentialImportPaths(pathName, project, uri));
-    } else if (isImportSpecifier(astPath)) {
+    } else if (isImportSpecifier(astPath) || isImportDefaultSpecifier(astPath)) {
       logInfo(`Handle script import for Project "${project.name}"`);
+      const importDeclaration: t.ImportDeclaration = astPath.parentFromLevel(2);
       const pathName: string = ((astPath.parentFromLevel(2) as unknown) as t.ImportDeclaration).source.value;
+      let importSpecifierName = '';
 
-      definitions = definitions.concat(this.getPotentialImportPaths(pathName, project, uri));
+      if (isImportSpecifier(astPath)) {
+        importSpecifierName = this.getImportSpecifierName(importDeclaration, position);
+      }
+
+      definitions = definitions.concat(this.getPotentialImportPaths(pathName, project, uri, importSpecifierName));
     } else if (isServiceInjection(astPath)) {
       let serviceName = ((astPath.node as unknown) as t.Identifier).name;
       const args = astPath.parent.value.arguments;

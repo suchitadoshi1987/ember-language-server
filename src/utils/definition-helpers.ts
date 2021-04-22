@@ -22,6 +22,21 @@ export function pathsToLocations(...paths: string[]): Location[] {
   });
 }
 
+export function importPathsToLocations(paths: string[], importName?: string): Location[] {
+  if (importName) {
+    return paths.filter(fs.existsSync).map((modulePath) => {
+      const file = fs.readFileSync(modulePath, 'utf8');
+      const arr = file.split(/\r?\n/);
+      const idxFound = arr.findIndex((line) => line.includes(importName) && line.includes('export'));
+      const useIndex = idxFound > -1 ? idxFound : 0;
+
+      return Location.create(URI.file(modulePath).toString(), Range.create(useIndex, 0, useIndex, 0));
+    });
+  }
+
+  return pathsToLocations(...paths);
+}
+
 export function getFirstTextPostion(text: string, content: string) {
   const arrayOfLines = text.match(/(.*?(?:\r\n?|\n|$))/gm) || [];
   let startLine = 0;
