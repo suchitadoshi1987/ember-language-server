@@ -302,7 +302,7 @@ export default class TemplateCompletionProvider {
     return uniqBy(candidates, 'label');
   }
   getBlockPathCandidates(root: string): CompletionItem[] {
-    if (!this.meta.projectAddonsInfoInitialized) {
+    if (!this.server.projectRoots.disableInitialization && !this.meta.projectAddonsInfoInitialized) {
       mGetProjectAddonsInfo(root);
       this.enableRegistryCache('projectAddonsInfoInitialized');
     }
@@ -338,7 +338,7 @@ export default class TemplateCompletionProvider {
       this.enableRegistryCache('helpersRegistryInitialized');
     }
 
-    if (!this.meta.projectAddonsInfoInitialized) {
+    if (!this.server.projectRoots.disableInitialization && !this.meta.projectAddonsInfoInitialized) {
       mGetProjectAddonsInfo(root);
       this.enableRegistryCache('projectAddonsInfoInitialized');
     }
@@ -377,7 +377,9 @@ export default class TemplateCompletionProvider {
     const paths: string[] = [];
 
     this.project.roots.forEach((projectRoot) => {
-      const scopedPaths = provideComponentTemplatePaths(projectRoot, focusPath.tag).filter((p) => fs.existsSync(p));
+      const scopedPaths = provideComponentTemplatePaths(projectRoot, focusPath.tag, this.server.projectRoots.disableInitialization).filter((p) =>
+        fs.existsSync(p)
+      );
 
       scopedPaths.forEach((p) => {
         if (!paths.includes(p)) {
@@ -454,7 +456,7 @@ export default class TemplateCompletionProvider {
           const tpls: string[] = [];
 
           this.project.roots.forEach((pRoot) => {
-            const localtpls = provideComponentTemplatePaths(pRoot, maybeComponentName);
+            const localtpls = provideComponentTemplatePaths(pRoot, maybeComponentName, this.server.projectRoots.disableInitialization);
 
             localtpls.forEach((item) => {
               if (!tpls.includes(item)) {
@@ -603,7 +605,7 @@ export default class TemplateCompletionProvider {
           this.enableRegistryCache('modifiersRegistryInitialized');
         }
 
-        if (!this.meta.projectAddonsInfoInitialized) {
+        if (!this.server.projectRoots.disableInitialization && !this.meta.projectAddonsInfoInitialized) {
           mGetProjectAddonsInfo(root);
           this.enableRegistryCache('projectAddonsInfoInitialized');
         }

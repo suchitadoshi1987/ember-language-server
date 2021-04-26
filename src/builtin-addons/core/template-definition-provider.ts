@@ -57,7 +57,12 @@ export function getPathsFromRegistry(type: 'helper' | 'modifier' | 'component', 
   return Array.from(bucket).filter((el: string) => path.normalize(el).includes(absRoot) && !isTestFile(path.normalize(el)) && fs.existsSync(el)) as string[];
 }
 
-export function provideComponentTemplatePaths(root: string, rawComponentName: string) {
+export function provideComponentTemplatePaths(root: string, rawComponentName: string, disableInit?: boolean) {
+  // @TODO: Handle template paths with globs here.
+  if (disableInit) {
+    return [];
+  }
+
   const maybeComponentName = normalizeToClassicComponent(rawComponentName);
   const items = getPathsFromRegistry('component', maybeComponentName, root);
 
