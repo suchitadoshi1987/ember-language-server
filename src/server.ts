@@ -60,6 +60,7 @@ import { Config, Initializer } from './types';
 export default class Server {
   initializers: Initializer[] = [];
   lazyInit = false;
+  rootPath: string;
   // Create a connection for the server. The connection defaults to Node's IPC as a transport, but
   // also supports stdio via command line flag
   connection: Connection = process.argv.includes('--stdio')
@@ -139,6 +140,31 @@ export default class Server {
       this.templateLinter.disable();
     } else if (config.useBuiltinLinting === true) {
       this.templateLinter.enable();
+    }
+
+    this.setElsConfig();
+  }
+
+  /**
+   * reads els-config.json and overrides the workspace setting.
+   */
+  setElsConfig() {
+    const elsConfigPath = path.join(this.rootPath, 'els-config.json');
+
+    if (fs.existsSync(elsConfigPath)) {
+      const config = JSON.parse(fs.readFileSync(elsConfigPath, 'utf8'));
+
+      if (config.ignoredProjects) {
+        this.projectRoots.setIgnoredProjects(config.ignoredProjects);
+      }
+
+      if (config.disableInitialization) {
+        this.projectRoots.setDisableInitialization(config.disableInitialization);
+      }
+
+      if (config.includeModules) {
+        this.projectRoots.setIncludeModules(config.includeModules);
+      }
     }
   }
 
@@ -376,6 +402,8 @@ export default class Server {
 
     if (!rootPath) {
       return { capabilities: {} };
+    } else {
+      this.rootPath = rootPath;
     }
 
     if (initializationOptions && initializationOptions.editor && initializationOptions.editor === 'vscode') {

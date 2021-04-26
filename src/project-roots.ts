@@ -5,7 +5,7 @@ import { logError, logInfo } from './utils/logger';
 import * as walkSync from 'walk-sync';
 import { URI } from 'vscode-uri';
 import * as fs from 'fs';
-import { isGlimmerXProject, isELSAddonRoot, isRootStartingWithFilePath } from './utils/layout-helpers';
+import { isGlimmerXProject, isELSAddonRoot, isRootStartingWithFilePath, isProjectAddonRoot } from './utils/layout-helpers';
 
 import Server from './server';
 
@@ -88,7 +88,13 @@ export default class ProjectRoots {
           logError(e);
         }
       } else {
-        this.onProjectAdd(fullPath);
+        if (this.disableInitialization) {
+          if (!isProjectAddonRoot(fullPath)) {
+            this.onProjectAdd(fullPath);
+          }
+        } else {
+          this.onProjectAdd(fullPath);
+        }
       }
     });
   }
