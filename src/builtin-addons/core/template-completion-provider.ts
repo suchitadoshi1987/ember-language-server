@@ -188,14 +188,11 @@ export default class TemplateCompletionProvider {
     if (textPrefix && this.server.projectRoots.disableInitialization) {
       const components = mGetProjectAddonsInfo(root, textPrefix, includeModules, true) || [];
 
-      items = uniqBy(
-        items.concat(components).map((item: CompletionItem) => {
-          return Object.assign({}, item, {
-            label: normalizeToAngleBracketComponent(item.label),
-          });
-        }),
-        'label'
-      );
+      items = items.concat(components).map((item: CompletionItem) => {
+        return Object.assign({}, item, {
+          label: normalizeToAngleBracketComponent(item.label),
+        });
+      });
     }
 
     if (!this.server.projectRoots.disableInitialization && !this.meta.projectAddonsInfoInitialized) {
@@ -655,10 +652,10 @@ export default class TemplateCompletionProvider {
 
         log(`Template completion time took: ${t1 - t0}ms`);
 
-        return newCompletions;
+        return uniqBy(newCompletions, 'label');
       }
     }
 
-    return completions;
+    return uniqBy(completions, 'label');
   }
 }
