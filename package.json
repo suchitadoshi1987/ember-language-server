@@ -1,7 +1,7 @@
 {
   "name": "@suchitadoshi1987/ember-language-server",
   "description": "A language server implementation for Ember.js projects.",
-  "version": "1.0.1",
+  "version": "1.1.2",
   "contributors": [
     "Suchita Doshi <suchitadoshi1987@gmail.com>"
   ],
