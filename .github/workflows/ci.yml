@@ -3,7 +3,7 @@ name: CI
 on:
   push:
     branches:
-      - component-context-info-origin
+      - develop
   pull_request: {}
 
 jobs:
@@ -113,7 +113,7 @@ jobs:
   cd:
     runs-on: ubuntu-latest
     name: cd
-    if: github.ref == 'refs/heads/component-context-info-origin'
+    if: github.ref == 'refs/heads/develop'
     timeout-minutes: 10
     needs: [floating-dependencies]
     env:
