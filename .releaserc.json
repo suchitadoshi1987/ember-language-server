@@ -1,5 +1,5 @@
 {
-  "branches": ["component-context-info-origin"],
+  "branches": ["develop"],
   "plugins": [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
