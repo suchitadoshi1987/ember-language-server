@@ -140,10 +140,7 @@ jobs:
         run: yarn compile
 
       - name: bundle for node
-        run: yarn build:bundle:node
-
-      - name: bundle for worker
-        run: yarn build:bundle:worker
+        run: yarn build
 
       - name: Release
         env:
