@@ -58,8 +58,10 @@ export interface PackageInfo {
   peerDependencies?: StringConfig;
   devDependencies?: StringConfig;
   dependencies?: StringConfig;
+  workspaces?: string[];
   'ember-addon'?: {
     version?: number;
+    projectRoot?: string;
     paths?: string[];
     before?: string | string[];
     after?: string | string[];
@@ -326,7 +328,15 @@ export function isGlimmerXProject(root: string) {
 }
 
 export function getProjectAddonsRoots(root: string, resolvedItems: string[] = [], packageFolderName = 'node_modules') {
-  const pack = getPackageJSON(root);
+  let pack = getPackageJSON(root);
+  const maybeRoot = pack['ember-addon']?.projectRoot;
+
+  // in case there is a different project root from the current one, then use that to get the dependencies.
+  if (!isEmberAddon(pack) && maybeRoot) {
+    const newRoot = path.join(root, maybeRoot);
+
+    pack = getPackageJSON(newRoot);
+  }
 
   if (resolvedItems.length) {
     if (!isEmberAddon(pack)) {
@@ -377,6 +387,22 @@ export function getPackageJSON(file: string): PackageInfo {
     return result;
   } catch (e) {
     return {};
+  }
+}
+
+/**
+ * Returns the name of the module from index.js file.
+ * @param file string
+ */
+export function getModuleNameFromIndexJS(file: string): string {
+  try {
+    const data = fs.readFileSync(path.join(file, 'index.js'), 'utf8');
+    const regex = /(.*) moduleName(.*) '(.*)'(.*)/i;
+    const found = data.match(regex);
+
+    return found && found.length ? found[3] : '';
+  } catch (e) {
+    return '';
   }
 }
 
@@ -624,8 +650,8 @@ function findByGlob(root: string, textPrefix: string, includeModules?: string[])
       const modules = includeModules.length === 1 ? includeModules[0] : `(${includeModules.join('|')})`;
 
       paths = fg.sync([
-        `${root}/node_modules/${modules}/${prefixData}*/addon/templates/components/**/*.{js,hbs}`,
-        `${root}/node_modules/${modules}/${prefixData}*/addon/components/**/*.{js,hbs}`,
+        `${root}/node_modules/${modules}/*${prefixData}*/addon/templates/components/**/*.{js,hbs}`,
+        `${root}/node_modules/${modules}/*${prefixData}*/addon/components/**/*.{js,hbs}`,
       ]);
     }
   } else {
@@ -661,12 +687,14 @@ function findByGlob(root: string, textPrefix: string, includeModules?: string[])
       }
     }
 
-    const addonRoot = filePath.split('/addon')[0];
+    const addonRoot = filePath.split('/addon/')[0];
     const info = getPackageJSON(addonRoot);
 
     if (info && info.name && isNameSpaced) {
+      // Since the addon name can be different from the folder name, get the name of the addon from the index.js.
+      const addonModuleName = getModuleNameFromIndexJS(addonRoot);
       const rootNameParts = info.name.split('/');
-      const addonName = rootNameParts.pop() || '';
+      const addonName = addonModuleName || rootNameParts.pop() || '';
 
       label = `${addonName}$${label}`;
     }

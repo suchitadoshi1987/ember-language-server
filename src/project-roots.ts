@@ -5,7 +5,7 @@ import { logError, logInfo } from './utils/logger';
 import * as walkSync from 'walk-sync';
 import { URI } from 'vscode-uri';
 import * as fs from 'fs';
-import { isGlimmerXProject, isELSAddonRoot, isRootStartingWithFilePath, isProjectAddonRoot } from './utils/layout-helpers';
+import { isGlimmerXProject, isELSAddonRoot, isRootStartingWithFilePath, isProjectAddonRoot, getPackageJSON } from './utils/layout-helpers';
 
 import Server from './server';
 
@@ -68,6 +68,16 @@ export default class ProjectRoots {
     this.disableInitialization = disableInitialization || false;
   }
 
+  /**
+   * Returns true If the project is a parent project of an ember project.
+   * @param root string
+   */
+  isParentProject(root: string): boolean {
+    const potentialParentRoot = getPackageJSON(root);
+
+    return potentialParentRoot && !!potentialParentRoot['ember-addon']?.projectRoot;
+  }
+
   findProjectsInsideRoot(workspaceRoot: string) {
     const roots = walkSync(workspaceRoot, {
       directories: false,
@@ -81,7 +91,7 @@ export default class ProjectRoots {
 
       if (filePath.endsWith('package.json')) {
         try {
-          if (isGlimmerXProject(fullPath)) {
+          if (isGlimmerXProject(fullPath) || this.isParentProject(fullPath)) {
             this.onProjectAdd(fullPath);
           }
         } catch (e) {
