@@ -9,7 +9,19 @@ import { log, logError } from './utils/logger';
 import * as findUp from 'find-up';
 import * as path from 'path';
 import * as fs from 'fs';
+import { pathToFileURL } from 'url';
 
+export type LinterVerifyArgs = { source: string; moduleId: string; filePath: string };
+export interface Linter {
+  new (): this;
+  verify(_params: LinterVerifyArgs): TemplateLinterError[];
+  verifyAndFix(
+    _params: LinterVerifyArgs
+  ): {
+    output: '';
+    isFixed: true;
+  };
+}
 import Server from './server';
 import { Project } from './project';
 
@@ -110,7 +122,11 @@ export default class TemplateLinter {
 
     const TemplateLinter = await this.getLinter(project);
 
-    let linter: typeof TemplateLinter | null = null;
+    if (!TemplateLinter) {
+      return;
+    }
+
+    let linter: Linter;
 
     try {
       setCwd(project.root);
@@ -157,7 +173,7 @@ export default class TemplateLinter {
     return await this.getLinter(project);
   }
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  private async getLinter(project: Project) {
+  private async getLinter(project: Project): Promise<Linter | undefined> {
     if (this._linterCache.has(project)) {
       return this._linterCache.get(project);
     }
@@ -168,16 +184,10 @@ export default class TemplateLinter {
         return;
       }
 
-      let nodePath = Files.resolveGlobalNodePath();
+      const nodePath = 'node_modules';
 
-      // vs-code-online fix (we don't have global path, but it returned)
-      if (!nodePath || !fs.existsSync(nodePath)) {
-        // easy fix case
-        nodePath = 'node_modules';
-
-        if (!fs.existsSync(path.join(project.root, nodePath))) {
-          return;
-        }
+      if (!fs.existsSync(path.join(project.root, nodePath))) {
+        return;
       }
 
       const linterPath = await (Files.resolveModulePath(project.root, 'ember-template-lint', nodePath, () => {
@@ -188,17 +198,29 @@ export default class TemplateLinter {
         return;
       }
 
-      // @ts-expect-error @todo - fix webpack imports
-      const requireFunc = typeof __webpack_require__ === 'function' ? __non_webpack_require__ : require;
+      try {
+        // commonjs behavior
 
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const linter = requireFunc(linterPath);
+        // @ts-expect-error @todo - fix webpack imports
+        const requireFunc = typeof __webpack_require__ === 'function' ? __non_webpack_require__ : require;
 
-      this._linterCache.set(project, linter);
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const linter: Linter = requireFunc(linterPath);
 
-      return linter;
+        this._linterCache.set(project, linter);
+
+        return linter;
+      } catch {
+        // ember-template-lint v4 support (as esm module)
+        // using eval here to stop webpack from bundling it
+        const linter: Linter = (await eval(`import("${pathToFileURL(linterPath)}")`)).default;
+
+        this._linterCache.set(project, linter);
+
+        return linter;
+      }
     } catch (error) {
-      log('Module ember-template-lint not found.');
+      log('Module ember-template-lint not found. ' + error.toString());
     }
   }
 }
