@@ -7,7 +7,7 @@ module.exports = {
     'eslint:recommended',
     'plugin:@typescript-eslint/eslint-recommended',
     'plugin:@typescript-eslint/recommended',
-    'prettier/@typescript-eslint', // disables conflicting rules from @typescript-eslint/eslint-plugin
+    'prettier', // disables conflicting rules from @typescript-eslint/eslint-plugin
     'plugin:prettier/recommended',
   ],
   globals: {

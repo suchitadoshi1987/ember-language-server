@@ -14,8 +14,9 @@ import {
   normalizePath,
   Registry,
   UnknownResult,
+  createConnection,
 } from './test_helpers/integration-helpers';
-import { createMessageConnection, MessageConnection, Logger, StreamMessageReader, StreamMessageWriter } from 'vscode-jsonrpc/node';
+import { MessageConnection } from 'vscode-jsonrpc/node';
 
 import { CompletionRequest, DefinitionRequest, DocumentSymbolRequest, ExecuteCommandRequest, ReferencesRequest } from 'vscode-languageserver-protocol/node';
 
@@ -25,28 +26,14 @@ describe('integration', function () {
 
   beforeAll(async () => {
     serverProcess = startServer();
-    connection = createMessageConnection(new StreamMessageReader(serverProcess.stdout), new StreamMessageWriter(serverProcess.stdin), <Logger>{
-      error(msg) {
-        console.log('error', msg);
-      },
-      log(msg) {
-        console.log('log', msg);
-      },
-      info(msg) {
-        console.log('info', msg);
-      },
-      warn(msg) {
-        console.log('warn', msg);
-      },
-    });
-    // connection.trace(2, {log: console.log}, false);
+    connection = createConnection(serverProcess);
     connection.listen();
     await new Promise((resolve) => setTimeout(resolve, 1000));
   });
 
-  afterAll(() => {
-    connection.dispose();
-    serverProcess.kill();
+  afterAll(async () => {
+    await connection.dispose();
+    await serverProcess.kill();
   });
 
   describe('Initialize request', () => {
@@ -417,7 +404,7 @@ describe('integration', function () {
       );
 
       // wait for async registry initialization;
-      const result: string[] = await connection.sendRequest((ExecuteCommandRequest.type as unknown) as string, {
+      const result: string[] = await connection.sendRequest(ExecuteCommandRequest.type as unknown as string, {
         command: 'els.getRelatedFiles',
         arguments: [path.join(project.normalizedPath, 'app', 'components', 'hello', 'template.hbs')],
       });
@@ -450,7 +437,7 @@ describe('integration', function () {
         connection
       );
 
-      const result: { path: string; meta: UnknownResult }[] = await connection.sendRequest((ExecuteCommandRequest.type as unknown) as string, {
+      const result: { path: string; meta: UnknownResult }[] = await connection.sendRequest(ExecuteCommandRequest.type as unknown as string, {
         command: 'els.getRelatedFiles',
         arguments: [path.join(project.normalizedPath, 'app', 'components', 'hello', 'index.hbs'), { includeMeta: true }],
       });

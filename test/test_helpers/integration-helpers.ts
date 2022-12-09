@@ -3,9 +3,11 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { createTempDir } from 'broccoli-test-helper';
 import { URI } from 'vscode-uri';
-import { MessageConnection } from 'vscode-jsonrpc/node';
+import { createMessageConnection, Logger, MessageConnection, StreamMessageReader, StreamMessageWriter } from 'vscode-jsonrpc/node';
 import * as spawn from 'cross-spawn';
 import { set, merge, get } from 'lodash';
+import * as cp from 'child_process';
+import { Readable, Writable } from 'stream';
 
 import {
   DidOpenTextDocumentNotification,
@@ -14,6 +16,32 @@ import {
   Definition,
   DidOpenTextDocumentParams,
 } from 'vscode-languageserver-protocol/node';
+
+export function createConnection(serverProcess: cp.ChildProcess) {
+  serverProcess.stderr?.on('data', (data) => {
+    fs.appendFileSync(`./error.${serverProcess.pid || 0}.log`, data);
+  });
+  const connection = createMessageConnection(
+    new StreamMessageReader(serverProcess.stdout as Readable),
+    new StreamMessageWriter(serverProcess.stdin as Writable),
+    <Logger>{
+      error(msg) {
+        console.log('error', msg);
+      },
+      log(msg) {
+        console.log('log', msg);
+      },
+      info(msg) {
+        console.log('info', msg);
+      },
+      warn(msg) {
+        console.log('warn', msg);
+      },
+    }
+  );
+
+  return connection;
+}
 
 export function startServer() {
   return spawn('node_modules/.bin/nyc', ['--reporter', 'none', 'node', './inst/start-server.js', '--stdio', '--no-clean'], {
@@ -389,5 +417,5 @@ export function initServer(connection: MessageConnection, projectName: string) {
     },
   };
 
-  return connection.sendRequest(InitializeRequest.type, params);
+  return connection.sendRequest(InitializeRequest.type as never, params);
 }
