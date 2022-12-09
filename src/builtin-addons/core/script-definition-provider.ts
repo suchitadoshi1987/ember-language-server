@@ -221,21 +221,21 @@ export default class CoreScriptDefinitionProvider {
         definitions = templateResults;
       }
     } else if (isModelReference(astPath)) {
-      const modelName = ((astPath.node as unknown) as t.StringLiteral).value;
+      const modelName = (astPath.node as unknown as t.StringLiteral).value;
 
       definitions = this.guessPathsForType(root, 'Model', modelName);
     } else if (isTransformReference(astPath)) {
-      const transformName = ((astPath.node as unknown) as t.StringLiteral).value;
+      const transformName = (astPath.node as unknown as t.StringLiteral).value;
 
       definitions = this.guessPathsForType(root, 'Transform', transformName);
     } else if (isImportPathDeclaration(astPath)) {
-      const pathName = ((astPath.node as unknown) as t.StringLiteral).value;
+      const pathName = (astPath.node as unknown as t.StringLiteral).value;
 
       definitions = definitions.concat(this.getPotentialImportPaths(pathName, project, uri));
     } else if (isImportSpecifier(astPath) || isImportDefaultSpecifier(astPath)) {
       logInfo(`Handle script import for Project "${project.name}"`);
       const importDeclaration: t.ImportDeclaration = astPath.parentFromLevel(2);
-      const pathName: string = ((astPath.parentFromLevel(2) as unknown) as t.ImportDeclaration).source.value;
+      const pathName: string = (astPath.parentFromLevel(2) as unknown as t.ImportDeclaration).source.value;
       let importSpecifierName = '';
 
       if (isImportSpecifier(astPath)) {
@@ -244,7 +244,7 @@ export default class CoreScriptDefinitionProvider {
 
       definitions = definitions.concat(this.getPotentialImportPaths(pathName, project, uri, importSpecifierName));
     } else if (isServiceInjection(astPath)) {
-      let serviceName = ((astPath.node as unknown) as t.Identifier).name;
+      let serviceName = (astPath.node as unknown as t.Identifier).name;
       const args = astPath.parent.value.arguments;
 
       if (args.length && args[0].type === 'StringLiteral') {
@@ -253,11 +253,11 @@ export default class CoreScriptDefinitionProvider {
 
       definitions = this.guessPathsForType(root, 'Service', normalizeServiceName(serviceName));
     } else if (isNamedServiceInjection(astPath)) {
-      const serviceName = ((astPath.node as unknown) as t.StringLiteral).value;
+      const serviceName = (astPath.node as unknown as t.StringLiteral).value;
 
       definitions = this.guessPathsForType(root, 'Service', normalizeServiceName(serviceName));
     } else if (isRouteLookup(astPath)) {
-      const routePath = ((astPath.node as unknown) as t.StringLiteral).value;
+      const routePath = (astPath.node as unknown as t.StringLiteral).value;
 
       definitions = provideRouteDefinition(root, routePath);
     }

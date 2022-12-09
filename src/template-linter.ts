@@ -15,9 +15,7 @@ export type LinterVerifyArgs = { source: string; moduleId: string; filePath: str
 export interface Linter {
   new (): this;
   verify(_params: LinterVerifyArgs): TemplateLinterError[];
-  verifyAndFix(
-    _params: LinterVerifyArgs
-  ): {
+  verifyAndFix(_params: LinterVerifyArgs): {
     output: '';
     isFixed: true;
   };
