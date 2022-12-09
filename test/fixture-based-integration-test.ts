@@ -1,8 +1,8 @@
 import * as cp from 'child_process';
 import * as path from 'path';
 import { URI } from 'vscode-uri';
-import { startServer, initServer, reloadProjects, openFile, normalizeUri } from './test_helpers/integration-helpers';
-import { createMessageConnection, MessageConnection, Logger, StreamMessageReader, StreamMessageWriter } from 'vscode-jsonrpc/node';
+import { startServer, initServer, reloadProjects, openFile, normalizeUri, createConnection } from './test_helpers/integration-helpers';
+import { MessageConnection } from 'vscode-jsonrpc/node';
 
 import { CompletionRequest, DefinitionRequest } from 'vscode-languageserver-protocol/node';
 
@@ -12,28 +12,14 @@ describe('With `full-project` initialized on server', () => {
 
   beforeAll(async () => {
     serverProcess = startServer();
-    connection = createMessageConnection(new StreamMessageReader(serverProcess.stdout), new StreamMessageWriter(serverProcess.stdin), <Logger>{
-      error(msg) {
-        console.log('error', msg);
-      },
-      log(msg) {
-        console.log('log', msg);
-      },
-      info(msg) {
-        console.log('info', msg);
-      },
-      warn(msg) {
-        console.log('warn', msg);
-      },
-    });
-    // connection.trace(2, {log: console.log}, false);
+    connection = createConnection(serverProcess);
     connection.listen();
     await new Promise((resolve) => setTimeout(resolve, 1000));
   });
 
-  afterAll(() => {
-    connection.dispose();
-    serverProcess.kill();
+  afterAll(async () => {
+    await connection.dispose();
+    await serverProcess.kill();
   });
 
   beforeEach(async () => {
