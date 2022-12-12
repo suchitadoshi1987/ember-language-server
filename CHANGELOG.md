@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/suchitadoshi1987/ember-language-server/compare/v1.2.0...v1.3.0) (2022-12-12)
+
+
+### Features
+
+* Merge pull request [#4](https://github.com/suchitadoshi1987/ember-language-server/issues/4) from jsturgis/fix-ci ([39dd433](https://github.com/suchitadoshi1987/ember-language-server/commit/39dd43329ada0f66b7b6015902f471d26721604b))
+
 # [1.2.0](https://github.com/suchitadoshi1987/ember-language-server/compare/v1.1.0...v1.2.0) (2022-02-09)
 
 
